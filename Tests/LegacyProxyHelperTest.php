@@ -11,16 +11,17 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use Symfony\Component\VarExporter\Exception\LogicException;
 use Symfony\Component\VarExporter\ProxyHelper;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Php82NullStandaloneReturnType;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\StringMagicGetClass;
 
-/**
- * @requires PHP < 8.4
- *
- * @group legacy
- */
+#[IgnoreDeprecations]
+#[Group('legacy')]
+#[RequiresPhp('<8.4')]
 class LegacyProxyHelperTest extends ProxyHelperTest
 {
     public function testGenerateLazyProxy()

@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -29,9 +31,8 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\HookedWithDefaultValue;
 use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
 
-/**
- * @group legacy
- */
+#[IgnoreDeprecations]
+#[Group('legacy')]
 class LegacyLazyGhostTraitTest extends TestCase
 {
     public function testGetPublic()

@@ -11,16 +11,17 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use Symfony\Component\VarExporter\LazyProxyTrait;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\FinalPublicClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestOverwritePropClass;
 
-/**
- * @requires PHP < 8.4
- *
- * @group legacy
- */
+#[IgnoreDeprecations]
+#[Group('legacy')]
+#[RequiresPhp('<8.4')]
 class LegacyLazyProxyTraitTest extends LazyProxyTraitTest
 {
     public function testLazyDecoratorClass()
