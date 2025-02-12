@@ -17,6 +17,7 @@ use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\VarExporter\Internal\LazyObjectState;
 use Symfony\Component\VarExporter\ProxyHelper;
+use Symfony\Component\VarExporter\Tests\Fixtures\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\ChildMagicClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\ChildStdClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\ChildTestClass;
@@ -476,6 +477,31 @@ class LazyGhostTraitTest extends TestCase
         $output = $serializer->normalize($object);
 
         $this->assertSame(['property' => 'property', 'method' => 'method'], $output);
+    }
+
+    /**
+     * @requires PHP 8.4
+     */
+    public function testPropertyHooks()
+    {
+        $initialized = false;
+        $object = $this->createLazyGhost(Hooked::class, function ($instance) use (&$initialized) {
+            $initialized = true;
+        });
+
+        $this->assertSame(123, $object->notBacked);
+        $this->assertFalse($initialized);
+        $this->assertSame(234, $object->backed);
+        $this->assertTrue($initialized);
+
+        $initialized = false;
+        $object = $this->createLazyGhost(Hooked::class, function ($instance) use (&$initialized) {
+            $initialized = true;
+        });
+
+        $object->backed = 345;
+        $this->assertTrue($initialized);
+        $this->assertSame(345, $object->backed);
     }
 
     /**
