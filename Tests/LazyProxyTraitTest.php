@@ -18,6 +18,7 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\VarExporter\Exception\LogicException;
 use Symfony\Component\VarExporter\LazyProxyTrait;
 use Symfony\Component\VarExporter\ProxyHelper;
+use Symfony\Component\VarExporter\Tests\Fixtures\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\RegularClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\FinalPublicClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\ReadOnlyClass;
@@ -319,6 +320,33 @@ class LazyProxyTraitTest extends TestCase
         $object::createLazyProxy(fn () => new ReadOnlyClass(234), $object);
 
         $this->assertSame(234, $object->foo);
+    }
+
+    /**
+     * @requires PHP 8.4
+     */
+    public function testPropertyHooks()
+    {
+        $initialized = false;
+        $object = $this->createLazyProxy(Hooked::class, function () use (&$initialized) {
+            $initialized = true;
+            return new Hooked();
+        });
+
+        $this->assertSame(123, $object->notBacked);
+        $this->assertFalse($initialized);
+        $this->assertSame(234, $object->backed);
+        $this->assertTrue($initialized);
+
+        $initialized = false;
+        $object = $this->createLazyProxy(Hooked::class, function () use (&$initialized) {
+            $initialized = true;
+            return new Hooked();
+        });
+
+        $object->backed = 345;
+        $this->assertTrue($initialized);
+        $this->assertSame(345, $object->backed);
     }
 
     /**
