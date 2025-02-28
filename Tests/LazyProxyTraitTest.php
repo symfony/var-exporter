@@ -18,7 +18,9 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\VarExporter\Exception\LogicException;
 use Symfony\Component\VarExporter\LazyProxyTrait;
 use Symfony\Component\VarExporter\ProxyHelper;
-use Symfony\Component\VarExporter\Tests\Fixtures\Hooked;
+use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\RegularClass;
+use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\AbstractHooked;
+use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\FinalPublicClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\ReadOnlyClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\StringMagicGetClass;
@@ -302,11 +304,12 @@ class LazyProxyTraitTest extends TestCase
     /**
      * @requires PHP 8.4
      */
-    public function testPropertyHooks()
+    public function testConcretePropertyHooks()
     {
         $initialized = false;
         $object = $this->createLazyProxy(Hooked::class, function () use (&$initialized) {
             $initialized = true;
+
             return new Hooked();
         });
 
@@ -318,12 +321,47 @@ class LazyProxyTraitTest extends TestCase
         $initialized = false;
         $object = $this->createLazyProxy(Hooked::class, function () use (&$initialized) {
             $initialized = true;
+
             return new Hooked();
         });
 
         $object->backed = 345;
         $this->assertTrue($initialized);
         $this->assertSame(345, $object->backed);
+    }
+
+    /**
+     * @requires PHP 8.4
+     */
+    public function testAbstractPropertyHooks()
+    {
+        $initialized = false;
+        $object = $this->createLazyProxy(AbstractHooked::class, function () use (&$initialized) {
+            $initialized = true;
+
+            return new class extends AbstractHooked {
+                public string $foo = 'Foo';
+                public string $bar = 'Bar';
+            };
+        });
+
+        $this->assertSame('Foo', $object->foo);
+        $this->assertSame('Bar', $object->bar);
+        $this->assertTrue($initialized);
+
+        $initialized = false;
+        $object = $this->createLazyProxy(AbstractHooked::class, function () use (&$initialized) {
+            $initialized = true;
+
+            return new class extends AbstractHooked {
+                public string $foo = 'Foo';
+                public string $bar = 'Bar';
+            };
+        });
+
+        $this->assertSame('Bar', $object->bar);
+        $this->assertSame('Foo', $object->foo);
+        $this->assertTrue($initialized);
     }
 
     /**

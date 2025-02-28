@@ -9,14 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\VarExporter\Tests\Fixtures;
+namespace Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy;
 
-class Hooked
+abstract class AbstractHooked implements HookedInterface
 {
-    public int $notBacked {
-        get { return 123; }
-        set { throw \LogicException('Cannot set value.'); }
-    }
+    abstract public string $bar { get; }
 
     public int $backed {
         get { return $this->backed ??= 234; }
