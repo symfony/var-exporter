@@ -28,7 +28,10 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\AsymmetricVisibility;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
 
-class LazyGhostTraitTest extends TestCase
+/**
+ * @group legacy
+ */
+class LegacyLazyGhostTraitTest extends TestCase
 {
     public function testGetPublic()
     {

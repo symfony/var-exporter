@@ -33,12 +33,13 @@ class LazyObjectState
     public int $status = self::STATUS_UNINITIALIZED_FULL;
 
     public object $realInstance;
+    public object $cloneInstance;
 
     /**
      * @param array<string, true> $skippedProperties
      */
     public function __construct(
-        public \Closure $initializer,
+        public ?\Closure $initializer = null,
         public array $skippedProperties = [],
     ) {
     }
@@ -93,5 +94,27 @@ class LazyObjectState
         }
 
         $this->status = self::STATUS_UNINITIALIZED_FULL;
+    }
+
+    public function __clone()
+    {
+        if (isset($this->cloneInstance)) {
+            try {
+                $this->realInstance = $this->cloneInstance;
+            } finally {
+                unset($this->cloneInstance);
+            }
+        } elseif (isset($this->realInstance)) {
+            $this->realInstance = clone $this->realInstance;
+        }
+    }
+
+    public function __get($name)
+    {
+        if ('realInstance' !== $name) {
+            throw new \BadMethodCallException(\sprintf('No such property "%s::$%s"', self::class, $name));
+        }
+
+        return $this->realInstance = ($this->initializer)();
     }
 }

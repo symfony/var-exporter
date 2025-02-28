@@ -18,6 +18,13 @@ use Symfony\Component\VarExporter\Internal\LazyObjectRegistry as Registry;
 use Symfony\Component\VarExporter\Internal\LazyObjectState;
 use Symfony\Component\VarExporter\Internal\LazyObjectTrait;
 
+if (\PHP_VERSION_ID >= 80400) {
+    trigger_deprecation('symfony/var-exporter', '7.3', 'The "%s" trait is deprecated, use native lazy objects instead.', LazyProxyTrait::class);
+}
+
+/**
+ * @deprecated since Symfony 7.3, use native lazy objects instead
+ */
 trait LazyProxyTrait
 {
     use LazyObjectTrait;
@@ -38,11 +45,12 @@ trait LazyProxyTrait
             Registry::$classReflectors[$class] ??= new \ReflectionClass($class);
             $instance ??= Registry::$classReflectors[$class]->newInstanceWithoutConstructor();
             Registry::$defaultProperties[$class] ??= (array) $instance;
-            Registry::$classResetters[$class] ??= Registry::getClassResetters($class);
 
             if (self::class === $class && \defined($class.'::LAZY_OBJECT_PROPERTY_SCOPES')) {
                 Hydrator::$propertyScopes[$class] ??= $class::LAZY_OBJECT_PROPERTY_SCOPES;
             }
+
+            Registry::$classResetters[$class] ??= Registry::getClassResetters($class);
         } else {
             $instance ??= Registry::$classReflectors[$class]->newInstanceWithoutConstructor();
         }
@@ -290,10 +298,6 @@ trait LazyProxyTrait
         }
 
         $this->lazyObjectState = clone $this->lazyObjectState;
-
-        if (isset($this->lazyObjectState->realInstance)) {
-            $this->lazyObjectState->realInstance = clone $this->lazyObjectState->realInstance;
-        }
     }
 
     public function __serialize(): array

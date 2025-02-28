@@ -11,15 +11,6 @@
 
 namespace Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy;
 
-class Hooked extends \stdClass
+readonly class ConcreteReadOnlyClass extends ReadOnlyClass
 {
-    public int $notBacked {
-        get { return 123; }
-        set { throw \LogicException('Cannot set value.'); }
-    }
-
-    public int $backed {
-        get { return $this->backed ??= 234; }
-        set { $this->backed = $value; }
-    }
 }
