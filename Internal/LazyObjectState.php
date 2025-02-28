@@ -71,8 +71,8 @@ class LazyObjectState
                 }
                 $properties = (array) $instance;
                 foreach ($values as $key => $value) {
-                    if (!\array_key_exists($key, $properties) && [$scope, $name, $readonlyScope] = $propertyScopes[$key] ?? null) {
-                        $scope = $readonlyScope ?? ('*' !== $scope ? $scope : $class);
+                    if (!\array_key_exists($key, $properties) && [$scope, $name, $writeScope] = $propertyScopes[$key] ?? null) {
+                        $scope = $writeScope ?? ('*' !== $scope ? $scope : $class);
                         $accessor = LazyObjectRegistry::$classAccessors[$scope] ??= LazyObjectRegistry::getClassAccessors($scope);
                         $accessor['set']($instance, $name, $value);
 
@@ -116,10 +116,10 @@ class LazyObjectState
         $properties = (array) $instance;
         $onlyProperties = \is_array($this->initializer) ? $this->initializer : null;
 
-        foreach ($propertyScopes as $key => [$scope, $name, $readonlyScope]) {
+        foreach ($propertyScopes as $key => [$scope, $name, $writeScope]) {
             $propertyScopes[$k = "\0$scope\0$name"] ?? $propertyScopes[$k = "\0*\0$name"] ?? $k = $name;
 
-            if ($k === $key && (null !== $readonlyScope || !\array_key_exists($k, $properties))) {
+            if ($k === $key && (null !== $writeScope || !\array_key_exists($k, $properties))) {
                 $skippedProperties[$k] = true;
             }
         }

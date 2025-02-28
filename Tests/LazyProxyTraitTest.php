@@ -18,8 +18,8 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\VarExporter\Exception\LogicException;
 use Symfony\Component\VarExporter\LazyProxyTrait;
 use Symfony\Component\VarExporter\ProxyHelper;
-use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\RegularClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\AbstractHooked;
+use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\AsymmetricVisibility;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\FinalPublicClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\ReadOnlyClass;
@@ -362,6 +362,21 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame('Bar', $object->bar);
         $this->assertSame('Foo', $object->foo);
         $this->assertTrue($initialized);
+    }
+
+    /**
+     * @requires PHP 8.4
+     */
+    public function testAsymmetricVisibility()
+    {
+        $initialized = false;
+        $object = $this->createLazyProxy(AsymmetricVisibility::class, function () use (&$initialized) {
+            $initialized = true;
+
+            return new AsymmetricVisibility(123);
+        });
+
+        $this->assertSame(123, $object->foo);
     }
 
     /**

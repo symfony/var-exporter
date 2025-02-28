@@ -25,6 +25,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\LazyClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\MagicClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\ReadOnlyClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost\TestClass;
+use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\AsymmetricVisibility;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
 
@@ -502,6 +503,21 @@ class LazyGhostTraitTest extends TestCase
         $object->backed = 345;
         $this->assertTrue($initialized);
         $this->assertSame(345, $object->backed);
+    }
+
+    /**
+     * @requires PHP 8.4
+     */
+    public function testAsymmetricVisibility()
+    {
+        $initialized = false;
+        $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) use (&$initialized) {
+            $initialized = true;
+
+            $instance->__construct(123);
+        });
+
+        $this->assertSame(123, $object->foo);
     }
 
     /**

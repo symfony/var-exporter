@@ -271,19 +271,19 @@ class Hydrator
             $name = $property->name;
 
             if (\ReflectionProperty::IS_PRIVATE & $flags) {
-                $readonlyScope = null;
-                if ($flags & \ReflectionProperty::IS_READONLY) {
-                    $readonlyScope = $class;
+                $writeScope = null;
+                if (\PHP_VERSION_ID >= 80400 ? $property->isPrivateSet() : ($flags & \ReflectionProperty::IS_READONLY)) {
+                    $writeScope = $class;
                 }
-                $propertyScopes["\0$class\0$name"] = $propertyScopes[$name] = [$class, $name, $readonlyScope, $property];
+                $propertyScopes["\0$class\0$name"] = $propertyScopes[$name] = [$class, $name, $writeScope, $property];
 
                 continue;
             }
-            $readonlyScope = null;
-            if ($flags & \ReflectionProperty::IS_READONLY) {
-                $readonlyScope = $property->class;
+            $writeScope = null;
+            if (\PHP_VERSION_ID >= 80400 ? $property->isProtectedSet() || $property->isPrivateSet() : ($flags & \ReflectionProperty::IS_READONLY)) {
+                $writeScope = $property->class;
             }
-            $propertyScopes[$name] = [$class, $name, $readonlyScope, $property];
+            $propertyScopes[$name] = [$class, $name, $writeScope, $property];
 
             if (\ReflectionProperty::IS_PROTECTED & $flags) {
                 $propertyScopes["\0*\0$name"] = $propertyScopes[$name];
@@ -298,9 +298,13 @@ class Hydrator
             foreach ($r->getProperties(\ReflectionProperty::IS_PRIVATE) as $property) {
                 if (!$property->isStatic()) {
                     $name = $property->name;
-                    $readonlyScope = $property->isReadOnly() ? $class : null;
-                    $propertyScopes["\0$class\0$name"] = [$class, $name, $readonlyScope, $property];
-                    $propertyScopes[$name] ??= [$class, $name, $readonlyScope, $property];
+                    if (\PHP_VERSION_ID < 80400) {
+                        $writeScope = $property->isReadOnly() ? $class : null;
+                    } else {
+                        $writeScope = $property->isPrivateSet() ? $class : null;
+                    }
+                    $propertyScopes["\0$class\0$name"] = [$class, $name, $writeScope, $property];
+                    $propertyScopes[$name] ??= [$class, $name, $writeScope, $property];
                 }
             }
         }
