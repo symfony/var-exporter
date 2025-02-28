@@ -74,10 +74,10 @@ class LazyObjectState
         $skippedProperties = $this->skippedProperties;
         $properties = (array) $instance;
 
-        foreach ($propertyScopes as $key => [$scope, $name, $readonlyScope]) {
+        foreach ($propertyScopes as $key => [$scope, $name, $writeScope]) {
             $propertyScopes[$k = "\0$scope\0$name"] ?? $propertyScopes[$k = "\0*\0$name"] ?? $k = $name;
 
-            if ($k === $key && (null !== $readonlyScope || !\array_key_exists($k, $properties))) {
+            if ($k === $key && (null !== $writeScope || !\array_key_exists($k, $properties))) {
                 $skippedProperties[$k] = true;
             }
         }

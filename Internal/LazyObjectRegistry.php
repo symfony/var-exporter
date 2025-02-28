@@ -58,7 +58,7 @@ class LazyObjectRegistry
             $propertyScopes = Hydrator::$propertyScopes[$class] ??= Hydrator::getPropertyScopes($class);
         }
 
-        foreach ($propertyScopes as $key => [$scope, $name, $readonlyScope]) {
+        foreach ($propertyScopes as $key => [$scope, $name, $writeScope]) {
             $propertyScopes[$k = "\0$scope\0$name"] ?? $propertyScopes[$k = "\0*\0$name"] ?? $k = $name;
 
             if ($k !== $key || "\0$class\0lazyObjectState" === $k) {
@@ -68,7 +68,7 @@ class LazyObjectRegistry
             if ($k === $name && ($propertyScopes[$k][4] ?? false)) {
                 $hookedProperties[$k] = true;
             } else {
-                $classProperties[$readonlyScope ?? $scope][$name] = $key;
+                $classProperties[$writeScope ?? $scope][$name] = $key;
             }
         }
 
@@ -126,9 +126,9 @@ class LazyObjectRegistry
         return $methods;
     }
 
-    public static function getScope($propertyScopes, $class, $property, $readonlyScope = null)
+    public static function getScope($propertyScopes, $class, $property, $writeScope = null)
     {
-        if (null === $readonlyScope && !isset($propertyScopes[$k = "\0$class\0$property"]) && !isset($propertyScopes[$k = "\0*\0$property"])) {
+        if (null === $writeScope && !isset($propertyScopes[$k = "\0$class\0$property"]) && !isset($propertyScopes[$k = "\0*\0$property"])) {
             return null;
         }
         $frame = debug_backtrace(\DEBUG_BACKTRACE_PROVIDE_OBJECT | \DEBUG_BACKTRACE_IGNORE_ARGS, 3)[2];
@@ -136,7 +136,7 @@ class LazyObjectRegistry
         if (\ReflectionProperty::class === $scope = $frame['class'] ?? \Closure::class) {
             $scope = $frame['object']->class;
         }
-        if (null === $readonlyScope && '*' === $k[1] && ($class === $scope || (is_subclass_of($class, $scope) && !isset($propertyScopes["\0$scope\0$property"])))) {
+        if (null === $writeScope && '*' === $k[1] && ($class === $scope || (is_subclass_of($class, $scope) && !isset($propertyScopes["\0$scope\0$property"])))) {
             return null;
         }
 

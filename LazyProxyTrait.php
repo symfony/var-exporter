@@ -106,7 +106,7 @@ trait LazyProxyTrait
         $scope = null;
         $instance = $this;
 
-        if ([$class, , $readonlyScope] = $propertyScopes[$name] ?? null) {
+        if ([$class, , $writeScope] = $propertyScopes[$name] ?? null) {
             $scope = Registry::getScope($propertyScopes, $class, $name);
 
             if (null === $scope || isset($propertyScopes["\0$scope\0$name"])) {
@@ -139,7 +139,7 @@ trait LazyProxyTrait
 
         try {
             if (null === $scope) {
-                if (null === $readonlyScope && 1 !== $parent) {
+                if (null === $writeScope && 1 !== $parent) {
                     return $instance->$name;
                 }
                 $value = $instance->$name;
@@ -148,7 +148,7 @@ trait LazyProxyTrait
             }
             $accessor = Registry::$classAccessors[$scope] ??= Registry::getClassAccessors($scope);
 
-            return $accessor['get']($instance, $name, null !== $readonlyScope || 1 === $parent);
+            return $accessor['get']($instance, $name, null !== $writeScope || 1 === $parent);
         } catch (\Error $e) {
             if (\Error::class !== $e::class || !str_starts_with($e->getMessage(), 'Cannot access uninitialized non-nullable property')) {
                 throw $e;
@@ -163,7 +163,7 @@ trait LazyProxyTrait
 
                 $accessor['set']($instance, $name, []);
 
-                return $accessor['get']($instance, $name, null !== $readonlyScope || 1 === $parent);
+                return $accessor['get']($instance, $name, null !== $writeScope || 1 === $parent);
             } catch (\Error) {
                 throw $e;
             }
@@ -176,10 +176,10 @@ trait LazyProxyTrait
         $scope = null;
         $instance = $this;
 
-        if ([$class, , $readonlyScope] = $propertyScopes[$name] ?? null) {
-            $scope = Registry::getScope($propertyScopes, $class, $name, $readonlyScope);
+        if ([$class, , $writeScope] = $propertyScopes[$name] ?? null) {
+            $scope = Registry::getScope($propertyScopes, $class, $name, $writeScope);
 
-            if ($readonlyScope === $scope || isset($propertyScopes["\0$scope\0$name"])) {
+            if ($writeScope === $scope || isset($propertyScopes["\0$scope\0$name"])) {
                 if ($state = $this->lazyObjectState ?? null) {
                     $instance = $state->realInstance ??= ($state->initializer)();
                 }
@@ -244,10 +244,10 @@ trait LazyProxyTrait
         $scope = null;
         $instance = $this;
 
-        if ([$class, , $readonlyScope] = $propertyScopes[$name] ?? null) {
-            $scope = Registry::getScope($propertyScopes, $class, $name, $readonlyScope);
+        if ([$class, , $writeScope] = $propertyScopes[$name] ?? null) {
+            $scope = Registry::getScope($propertyScopes, $class, $name, $writeScope);
 
-            if ($readonlyScope === $scope || isset($propertyScopes["\0$scope\0$name"])) {
+            if ($writeScope === $scope || isset($propertyScopes["\0$scope\0$name"])) {
                 if ($state = $this->lazyObjectState ?? null) {
                     $instance = $state->realInstance ??= ($state->initializer)();
                 }
