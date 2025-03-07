@@ -67,7 +67,7 @@ final class ProxyHelper
             }
 
             if ($p->isFinal()) {
-                throw new LogicException(sprintf('Cannot generate lazy ghost: property "%s::$%s" is final.', $class->name, $p->name));
+                throw new LogicException(\sprintf('Cannot generate lazy ghost: property "%s::$%s" is final.', $class->name, $p->name));
             }
 
             $type = self::exportType($p);
@@ -75,7 +75,7 @@ final class ProxyHelper
 
             foreach ($p->getHooks() as $hook => $method) {
                 if ($method->isFinal()) {
-                    throw new LogicException(sprintf('Cannot generate lazy ghost: hook "%s::%s()" is final.', $class->name, $method->name));
+                    throw new LogicException(\sprintf('Cannot generate lazy ghost: hook "%s::%s()" is final.', $class->name, $method->name));
                 }
 
                 if ('get' === $hook) {
@@ -86,7 +86,7 @@ final class ProxyHelper
                     $arg = '$'.$method->getParameters()[0]->name;
                     $hooks .= "            set({$parameters}) { \$this->initializeLazyObject(); parent::\${$name}::set({$arg}); }\n";
                 } else {
-                    throw new LogicException(sprintf('Cannot generate lazy ghost: hook "%s::%s()" is not supported.', $class->name, $method->name));
+                    throw new LogicException(\sprintf('Cannot generate lazy ghost: hook "%s::%s()" is not supported.', $class->name, $method->name));
                 }
             }
 
@@ -179,7 +179,7 @@ final class ProxyHelper
 
             foreach ($methods as $hook => $method) {
                 if ($method->isFinal()) {
-                    throw new LogicException(sprintf('Cannot generate lazy proxy: hook "%s::%s()" is final.', $class->name, $method->name));
+                    throw new LogicException(\sprintf('Cannot generate lazy proxy: hook "%s::%s()" is final.', $class->name, $method->name));
                 }
 
                 if ('get' === $hook) {
@@ -209,7 +209,7 @@ final class ProxyHelper
 
                     EOPHP;
                 } else {
-                    throw new LogicException(sprintf('Cannot generate lazy proxy: hook "%s::%s()" is not supported.', $class->name, $method->name));
+                    throw new LogicException(\sprintf('Cannot generate lazy proxy: hook "%s::%s()" is not supported.', $class->name, $method->name));
                 }
             }
 
