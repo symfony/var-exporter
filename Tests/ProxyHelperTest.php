@@ -253,10 +253,9 @@ class ProxyHelperTest extends TestCase
      */
     public function testPropertyHooks()
     {
-        self::assertStringContainsString(
-            "[parent::class, 'backed', null, 4 => true]",
-            ProxyHelper::generateLazyProxy(new \ReflectionClass(Hooked::class))
-        );
+        $proxyCode = ProxyHelper::generateLazyProxy(new \ReflectionClass(Hooked::class));
+        self::assertStringContainsString("'backed' => [parent::class, 'backed', null, 7],", $proxyCode);
+        self::assertStringContainsString("'notBacked' => [parent::class, 'notBacked', null, 2055],", $proxyCode);
     }
 }
 
