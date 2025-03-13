@@ -43,7 +43,7 @@ class LazyObjectState
     ) {
     }
 
-    public function initialize($instance, $propertyName, $propertyScope)
+    public function initialize($instance, $propertyName, $writeScope)
     {
         if (self::STATUS_UNINITIALIZED_FULL !== $this->status) {
             return $this->status;
@@ -74,10 +74,10 @@ class LazyObjectState
         $skippedProperties = $this->skippedProperties;
         $properties = (array) $instance;
 
-        foreach ($propertyScopes as $key => [$scope, $name, $writeScope]) {
+        foreach ($propertyScopes as $key => [$scope, $name, , $access]) {
             $propertyScopes[$k = "\0$scope\0$name"] ?? $propertyScopes[$k = "\0*\0$name"] ?? $k = $name;
 
-            if ($k === $key && (null !== $writeScope || !\array_key_exists($k, $properties))) {
+            if ($k === $key && ($access & Hydrator::PROPERTY_HAS_HOOKS || ($access >> 2) & \ReflectionProperty::IS_READONLY || !\array_key_exists($k, $properties))) {
                 $skippedProperties[$k] = true;
             }
         }
