@@ -323,13 +323,18 @@ class LazyGhostTraitTest extends TestCase
      */
     public function testAsymmetricVisibility()
     {
-        $initialized = false;
-        $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) use (&$initialized) {
-            $initialized = true;
-
-            $instance->__construct(123);
+        $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) {
+            $instance->__construct(123, 234);
         });
 
+        $this->assertSame(123, $object->foo);
+        $this->assertSame(234, $object->getBar());
+
+        $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) {
+            $instance->__construct(123, 234);
+        });
+
+        $this->assertSame(234, $object->getBar());
         $this->assertSame(123, $object->foo);
     }
 
