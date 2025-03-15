@@ -172,7 +172,7 @@ class ProxyHelperTest extends TestCase
     public static function classWithUnserializeMagicMethodProvider(): iterable
     {
         yield 'not type hinted __unserialize method' => [new class {
-            public function __unserialize($array)
+            public function __unserialize($array): void
             {
             }
         }, <<<'EOPHP'
@@ -192,7 +192,7 @@ class ProxyHelperTest extends TestCase
         EOPHP];
 
         yield 'type hinted __unserialize method' => [new class {
-            public function __unserialize(array $array)
+            public function __unserialize(array $array): void
             {
             }
         }, <<<'EOPHP'
