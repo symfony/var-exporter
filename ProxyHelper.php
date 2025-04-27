@@ -15,7 +15,6 @@ use Symfony\Component\VarExporter\Exception\LogicException;
 use Symfony\Component\VarExporter\Internal\Hydrator;
 use Symfony\Component\VarExporter\Internal\LazyDecoratorTrait;
 use Symfony\Component\VarExporter\Internal\LazyObjectRegistry;
-use Symfony\Component\VarExporter\LazyProxyTrait;
 
 /**
  * @author Nicolas Grekas <p@tchwork.com>
