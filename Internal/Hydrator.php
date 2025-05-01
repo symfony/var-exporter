@@ -160,7 +160,7 @@ class Hydrator
                     $object->$name = $value;
                     $object->$name = &$value;
                 } elseif (true !== $noRef) {
-                    $notByRef($object, $value);
+                    $noRef($object, $value);
                 } else {
                     $object->$name = $value;
                 }
