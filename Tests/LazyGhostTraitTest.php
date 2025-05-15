@@ -329,16 +329,22 @@ class LazyGhostTraitTest extends TestCase
             $initialized = true;
         });
 
-        $this->assertSame(321, $object->backedWithDefault);
+        $this->assertSame(321, $object->backedIntWithDefault);
+        $this->assertSame('321', $object->backedStringWithDefault);
+        $this->assertSame(false, $object->backedBoolWithDefault);
         $this->assertTrue($initialized);
 
         $initialized = false;
         $object = $this->createLazyGhost(HookedWithDefaultValue::class, function ($instance) use (&$initialized) {
             $initialized = true;
         });
-        $object->backedWithDefault = 654;
+        $object->backedIntWithDefault = 654;
+        $object->backedStringWithDefault = '654';
+        $object->backedBoolWithDefault = true;
         $this->assertTrue($initialized);
-        $this->assertSame(654, $object->backedWithDefault);
+        $this->assertSame(654, $object->backedIntWithDefault);
+        $this->assertSame('654', $object->backedStringWithDefault);
+        $this->assertSame(true, $object->backedBoolWithDefault);
     }
 
     /**
