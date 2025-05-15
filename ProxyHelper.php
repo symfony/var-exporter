@@ -86,7 +86,7 @@ final class ProxyHelper
                 .($p->isProtected() ? 'protected' : 'public')
                 .($p->isProtectedSet() ? ' protected(set)' : '')
                 ." {$type} \${$name}"
-                .($p->hasDefaultValue() ? ' = '.$p->getDefaultValue() : '')
+                .($p->hasDefaultValue() ? ' = '.VarExporter::export($p->getDefaultValue()) : '')
                 ." {\n";
 
             foreach ($p->getHooks() as $hook => $method) {
