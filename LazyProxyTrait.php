@@ -18,9 +18,7 @@ use Symfony\Component\VarExporter\Internal\LazyObjectRegistry as Registry;
 use Symfony\Component\VarExporter\Internal\LazyObjectState;
 use Symfony\Component\VarExporter\Internal\LazyObjectTrait;
 
-if (\PHP_VERSION_ID >= 80400) {
-    trigger_deprecation('symfony/var-exporter', '7.3', 'The "%s" trait is deprecated, use native lazy objects instead.', LazyProxyTrait::class);
-}
+trigger_deprecation('symfony/var-exporter', '7.3', 'The "%s" trait is deprecated, use native lazy objects instead.', LazyProxyTrait::class);
 
 /**
  * @deprecated since Symfony 7.3, use native lazy objects instead
@@ -123,7 +121,7 @@ trait LazyProxyTrait
                 if ($state = $this->lazyObjectState ?? null) {
                     $instance = $state->realInstance ??= ($state->initializer)();
                 }
-                if (\PHP_VERSION_ID >= 80400 && !$notByRef && ($access >> 2) & \ReflectionProperty::IS_PRIVATE_SET) {
+                if (!$notByRef && ($access >> 2) & \ReflectionProperty::IS_PRIVATE_SET) {
                     $scope ??= $writeScope;
                 }
                 $parent = 2;

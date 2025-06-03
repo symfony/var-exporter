@@ -145,7 +145,7 @@ class LazyObjectRegistry
 
     public static function getScopeForWrite($propertyScopes, $class, $property, $flags)
     {
-        if (!($flags & (\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_READONLY | (\PHP_VERSION_ID >= 80400 ? \ReflectionProperty::IS_PRIVATE_SET | \ReflectionProperty::IS_PROTECTED_SET : 0)))) {
+        if (!($flags & (\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_READONLY | \ReflectionProperty::IS_PRIVATE_SET))) {
             return null;
         }
         $frame = debug_backtrace(\DEBUG_BACKTRACE_PROVIDE_OBJECT | \DEBUG_BACKTRACE_IGNORE_ARGS, 3)[2];
@@ -153,10 +153,10 @@ class LazyObjectRegistry
         if (\ReflectionProperty::class === $scope = $frame['class'] ?? \Closure::class) {
             $scope = $frame['object']->class;
         }
-        if ($flags & (\ReflectionProperty::IS_PRIVATE | (\PHP_VERSION_ID >= 80400 ? \ReflectionProperty::IS_PRIVATE_SET : \ReflectionProperty::IS_READONLY))) {
+        if ($flags & (\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PRIVATE_SET)) {
             return $scope;
         }
-        if ($flags & (\ReflectionProperty::IS_PROTECTED | (\PHP_VERSION_ID >= 80400 ? \ReflectionProperty::IS_PROTECTED_SET : 0)) && ($class === $scope || (is_subclass_of($class, $scope) && !isset($propertyScopes["\0$scope\0$property"])))) {
+        if ($flags & (\ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PROTECTED_SET) && ($class === $scope || (is_subclass_of($class, $scope) && !isset($propertyScopes["\0$scope\0$property"])))) {
             return null;
         }
 

@@ -16,9 +16,6 @@ use Symfony\Component\VarExporter\ProxyHelper;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Php82NullStandaloneReturnType;
 
-/**
- * @requires PHP 8.4
- */
 class ProxyHelperTest extends TestCase
 {
     /**
@@ -282,9 +279,6 @@ class ProxyHelperTest extends TestCase
         );
     }
 
-    /**
-     * @requires PHP 8.4
-     */
     public function testPropertyHooks()
     {
         $proxyCode = ProxyHelper::generateLazyProxy(new \ReflectionClass(Hooked::class));

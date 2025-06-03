@@ -237,10 +237,6 @@ class VarExporterTest extends TestCase
         yield ['unit-enum', [FooUnitEnum::Bar], true];
         yield ['readonly', new FooReadonly('k', 'v')];
 
-        if (\PHP_VERSION_ID < 80400) {
-            return;
-        }
-
         yield ['backed-property', new BackedProperty('name')];
     }
 
