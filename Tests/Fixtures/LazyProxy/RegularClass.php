@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\VarExporter\Tests\Fixtures\LazyGhost;
+namespace Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy;
 
-readonly class ReadOnlyClass
+class RegularClass extends \stdClass
 {
     public function __construct(
         public int $foo,

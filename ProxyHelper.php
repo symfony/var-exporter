@@ -22,102 +22,6 @@ use Symfony\Component\VarExporter\Internal\LazyObjectRegistry;
 final class ProxyHelper
 {
     /**
-     * Helps generate lazy-loading ghost objects.
-     *
-     * @deprecated since Symfony 7.3, use native lazy objects instead
-     *
-     * @throws LogicException When the class is incompatible with ghost objects
-     */
-    public static function generateLazyGhost(\ReflectionClass $class): string
-    {
-        if ($class->isFinal()) {
-            throw new LogicException(\sprintf('Cannot generate lazy ghost: class "%s" is final.', $class->name));
-        }
-        if ($class->isInterface() || $class->isAbstract() || $class->isTrait()) {
-            throw new LogicException(\sprintf('Cannot generate lazy ghost: "%s" is not a concrete class.', $class->name));
-        }
-        if (\stdClass::class !== $class->name && $class->isInternal()) {
-            throw new LogicException(\sprintf('Cannot generate lazy ghost: class "%s" is internal.', $class->name));
-        }
-        if ($class->hasMethod('__get') && 'mixed' !== (self::exportType($class->getMethod('__get')) ?? 'mixed')) {
-            throw new LogicException(\sprintf('Cannot generate lazy ghost: return type of method "%s::__get()" should be "mixed".', $class->name));
-        }
-
-        static $traitMethods;
-        $traitMethods ??= (new \ReflectionClass(LazyGhostTrait::class))->getMethods();
-
-        foreach ($traitMethods as $method) {
-            if ($class->hasMethod($method->name) && $class->getMethod($method->name)->isFinal()) {
-                throw new LogicException(\sprintf('Cannot generate lazy ghost: method "%s::%s()" is final.', $class->name, $method->name));
-            }
-        }
-
-        $parent = $class;
-        while ($parent = $parent->getParentClass()) {
-            if (\stdClass::class !== $parent->name && $parent->isInternal()) {
-                throw new LogicException(\sprintf('Cannot generate lazy ghost: class "%s" extends "%s" which is internal.', $class->name, $parent->name));
-            }
-        }
-
-        $hooks = '';
-        $propertyScopes = Hydrator::$propertyScopes[$class->name] ??= Hydrator::getPropertyScopes($class->name);
-        foreach ($propertyScopes as $key => [$scope, $name, , $access]) {
-            $propertyScopes[$k = "\0$scope\0$name"] ?? $propertyScopes[$k = "\0*\0$name"] ?? $k = $name;
-            $flags = $access >> 2;
-
-            if ($k !== $key || !($access & Hydrator::PROPERTY_HAS_HOOKS) || $flags & \ReflectionProperty::IS_VIRTUAL) {
-                continue;
-            }
-
-            if ($flags & (\ReflectionProperty::IS_FINAL | \ReflectionProperty::IS_PRIVATE)) {
-                throw new LogicException(\sprintf('Cannot generate lazy ghost: property "%s::$%s" is final or private(set).', $class->name, $name));
-            }
-
-            $p = $propertyScopes[$k][4] ?? Hydrator::$propertyScopes[$class->name][$k][4] = new \ReflectionProperty($scope, $name);
-
-            $type = self::exportType($p);
-            $hooks .= "\n    "
-                .($p->isProtected() ? 'protected' : 'public')
-                .($p->isProtectedSet() ? ' protected(set)' : '')
-                ." {$type} \${$name}"
-                .($p->hasDefaultValue() ? ' = '.VarExporter::export($p->getDefaultValue()) : '')
-                ." {\n";
-
-            foreach ($p->getHooks() as $hook => $method) {
-                if ('get' === $hook) {
-                    $ref = ($method->returnsReference() ? '&' : '');
-                    $hooks .= "        {$ref}get { \$this->initializeLazyObject(); return parent::\${$name}::get(); }\n";
-                } elseif ('set' === $hook) {
-                    $parameters = self::exportParameters($method, true);
-                    $arg = '$'.$method->getParameters()[0]->name;
-                    $hooks .= "        set({$parameters}) { \$this->initializeLazyObject(); parent::\${$name}::set({$arg}); }\n";
-                } else {
-                    throw new LogicException(\sprintf('Cannot generate lazy ghost: hook "%s::%s()" is not supported.', $class->name, $method->name));
-                }
-            }
-
-            $hooks .= "    }\n";
-        }
-
-        $propertyScopes = self::exportPropertyScopes($class->name, $propertyScopes);
-
-        return <<<EOPHP
-             extends \\{$class->name} implements \Symfony\Component\VarExporter\LazyObjectInterface
-            {
-                use \Symfony\Component\VarExporter\LazyGhostTrait;
-
-                private const LAZY_OBJECT_PROPERTY_SCOPES = {$propertyScopes};
-            {$hooks}}
-
-            // Help opcache.preload discover always-needed symbols
-            class_exists(\Symfony\Component\VarExporter\Internal\Hydrator::class);
-            class_exists(\Symfony\Component\VarExporter\Internal\LazyObjectRegistry::class);
-            class_exists(\Symfony\Component\VarExporter\Internal\LazyObjectState::class);
-
-            EOPHP;
-    }
-
-    /**
      * Helps generate lazy-loading decorators.
      *
      * @param \ReflectionClass[] $interfaces
@@ -140,8 +44,7 @@ final class ProxyHelper
             } while (!$extendsInternalClass && $parent = $parent->getParentClass());
 
             if (!$extendsInternalClass) {
-                trigger_deprecation('symfony/var-exporter', '7.3', 'Generating lazy proxy for class "%s" is deprecated; leverage native lazy objects instead.', $class->name);
-                // throw new LogicException(\sprintf('Cannot generate lazy proxy: leverage native lazy objects instead for class "%s".', $class->name));
+                throw new LogicException(\sprintf('Cannot generate lazy proxy: leverage native lazy objects instead for class "%s".', $class->name));
             }
         }
 
