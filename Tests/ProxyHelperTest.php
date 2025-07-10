@@ -171,7 +171,7 @@ class ProxyHelperTest extends TestCase
 
     public static function classWithUnserializeMagicMethodProvider(): iterable
     {
-        yield 'not type hinted __unserialize method' => [new class() {
+        yield 'not type hinted __unserialize method' => [new class {
             public function __unserialize($array)
             {
             }
@@ -191,7 +191,7 @@ class ProxyHelperTest extends TestCase
         }
         EOPHP];
 
-        yield 'type hinted __unserialize method' => [new class() {
+        yield 'type hinted __unserialize method' => [new class {
             public function __unserialize(array $array)
             {
             }
@@ -221,7 +221,7 @@ class ProxyHelperTest extends TestCase
 
         EOPHP;
 
-        $class = new \ReflectionClass(new class() {
+        $class = new \ReflectionClass(new class {
             #[SomeAttribute]
             public function foo(#[\SensitiveParameter, AnotherAttribute] $a): int
             {

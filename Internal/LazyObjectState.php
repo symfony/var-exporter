@@ -67,7 +67,7 @@ class LazyObjectState
 
             if ($initializer = $this->initializer["\0"] ?? null) {
                 if (!\is_array($values = $initializer($instance, LazyObjectRegistry::$defaultProperties[$class]))) {
-                    throw new \TypeError(sprintf('The lazy-initializer defined for instance of "%s" must return an array, got "%s".', $class, get_debug_type($values)));
+                    throw new \TypeError(\sprintf('The lazy-initializer defined for instance of "%s" must return an array, got "%s".', $class, get_debug_type($values)));
                 }
                 $properties = (array) $instance;
                 foreach ($values as $key => $value) {

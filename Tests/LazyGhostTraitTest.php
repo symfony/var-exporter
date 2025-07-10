@@ -426,7 +426,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testIndirectModification()
     {
-        $obj = new class() {
+        $obj = new class {
             public array $foo;
         };
         $proxy = $this->createLazyGhost($obj::class, fn () => null);
@@ -518,7 +518,7 @@ class LazyGhostTraitTest extends TestCase
 
         $this->assertSame(321, $object->backedIntWithDefault);
         $this->assertSame('321', $object->backedStringWithDefault);
-        $this->assertSame(false, $object->backedBoolWithDefault);
+        $this->assertFalse($object->backedBoolWithDefault);
         $this->assertTrue($initialized);
 
         $initialized = false;
@@ -531,7 +531,7 @@ class LazyGhostTraitTest extends TestCase
         $this->assertTrue($initialized);
         $this->assertSame(654, $object->backedIntWithDefault);
         $this->assertSame('654', $object->backedStringWithDefault);
-        $this->assertSame(true, $object->backedBoolWithDefault);
+        $this->assertTrue($object->backedBoolWithDefault);
     }
 
     /**

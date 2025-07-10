@@ -66,7 +66,7 @@ class VarExporterTest extends TestCase
         yield [$h = fopen(__FILE__, 'r')];
         yield [[$h]];
 
-        $a = new class() {
+        $a = new class {
         };
 
         yield [$a];
