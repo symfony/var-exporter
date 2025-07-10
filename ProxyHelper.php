@@ -70,7 +70,7 @@ final class ProxyHelper
             }
 
             if ($flags & (\ReflectionProperty::IS_FINAL | \ReflectionProperty::IS_PRIVATE)) {
-                throw new LogicException(sprintf('Cannot generate lazy ghost: property "%s::$%s" is final or private(set).', $class->name, $name));
+                throw new LogicException(\sprintf('Cannot generate lazy ghost: property "%s::$%s" is final or private(set).', $class->name, $name));
             }
 
             $p = $propertyScopes[$k][4] ?? Hydrator::$propertyScopes[$class->name][$k][4] = new \ReflectionProperty($scope, $name);
@@ -92,7 +92,7 @@ final class ProxyHelper
                     $arg = '$'.$method->getParameters()[0]->name;
                     $hooks .= "        set({$parameters}) { \$this->initializeLazyObject(); parent::\${$name}::set({$arg}); }\n";
                 } else {
-                    throw new LogicException(sprintf('Cannot generate lazy ghost: hook "%s::%s()" is not supported.', $class->name, $method->name));
+                    throw new LogicException(\sprintf('Cannot generate lazy ghost: hook "%s::%s()" is not supported.', $class->name, $method->name));
                 }
             }
 
@@ -159,7 +159,7 @@ final class ProxyHelper
                 }
 
                 if ($flags & (\ReflectionProperty::IS_FINAL | \ReflectionProperty::IS_PRIVATE)) {
-                    throw new LogicException(sprintf('Cannot generate lazy proxy: property "%s::$%s" is final or private(set).', $class->name, $name));
+                    throw new LogicException(\sprintf('Cannot generate lazy proxy: property "%s::$%s" is final or private(set).', $class->name, $name));
                 }
 
                 $p = $propertyScopes[$k][4] ?? Hydrator::$propertyScopes[$class->name][$k][4] = new \ReflectionProperty($scope, $name);
@@ -228,7 +228,7 @@ final class ProxyHelper
 
                     EOPHP;
                 } else {
-                    throw new LogicException(sprintf('Cannot generate lazy proxy: hook "%s::%s()" is not supported.', $class->name, $method->name));
+                    throw new LogicException(\sprintf('Cannot generate lazy proxy: hook "%s::%s()" is not supported.', $class->name, $method->name));
                 }
             }
 
