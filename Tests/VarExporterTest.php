@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\VarDumper\Test\VarDumperTestTrait;
 use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
@@ -39,9 +40,7 @@ class VarExporterTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider provideFailingSerialization
-     */
+    #[DataProvider('provideFailingSerialization')]
     public function testFailingSerialization($value)
     {
         $this->expectException(NotInstantiableTypeException::class);
@@ -77,9 +76,7 @@ class VarExporterTest extends TestCase
         yield [$a];
     }
 
-    /**
-     * @dataProvider provideExport
-     */
+    #[DataProvider('provideExport')]
     public function testExport(string $testName, $value, bool $staticValueExpected = false)
     {
         $dumpedValue = $this->getDump($value);

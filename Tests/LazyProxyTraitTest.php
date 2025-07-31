@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -31,9 +32,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestUnserializeClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestWakeupClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
 
-/**
- * @requires PHP 8.4
- */
+#[RequiresPhp('8.4')]
 class LazyProxyTraitTest extends TestCase
 {
     public function testGetter()
@@ -292,9 +291,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(234, $object->foo);
     }
 
-    /**
-     * @requires PHP 8.3
-     */
+    #[RequiresPhp('8.3')]
     public function testReinitReadonlyLazyProxy()
     {
         $object = $this->createLazyProxy(ReadOnlyClass::class, fn () => new ConcreteReadOnlyClass(123));
@@ -306,9 +303,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(234, $object->foo);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testConcretePropertyHooks()
     {
         $initialized = false;
@@ -335,9 +330,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(345, $object->backed);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testAbstractPropertyHooks()
     {
         $initialized = false;
@@ -369,9 +362,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertTrue($initialized);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testAsymmetricVisibility()
     {
         $object = $this->createLazyProxy(AsymmetricVisibility::class, function () {

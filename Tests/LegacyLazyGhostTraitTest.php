@@ -11,8 +11,10 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\IgnoreDeprecations;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
@@ -140,9 +142,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertTrue($clone->isLazyObjectInitialized());
     }
 
-    /**
-     * @dataProvider provideMagicClass
-     */
+    #[DataProvider('provideMagicClass')]
     public function testMagicClass(MagicClass $instance)
     {
         $this->assertSame('bar', $instance->foo);
@@ -242,9 +242,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertSame([123], $proxy->foo);
     }
 
-    /**
-     * @requires PHP 8.3
-     */
+    #[RequiresPhp('8.3')]
     public function testReadOnlyClass()
     {
         $proxy = $this->createLazyGhost(ReadOnlyClass::class, fn ($proxy) => $proxy->__construct(123));
@@ -298,9 +296,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertSame(3, $object->public);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testPropertyHooks()
     {
         $initialized = false;
@@ -323,9 +319,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertSame(345, $object->backed);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testPropertyHooksWithDefaultValue()
     {
         $initialized = false;
@@ -351,9 +345,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertTrue($object->backedBoolWithDefault);
     }
 
-    /**
-     * @requires PHP 8.4
-     */
+    #[RequiresPhp('8.4')]
     public function testAsymmetricVisibility()
     {
         $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) {
