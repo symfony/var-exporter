@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\VarExporter\Internal;
 
-use Symfony\Component\VarExporter\Hydrator as PublicHydrator;
-
 /**
  * Keeps the state of lazy objects.
  *
