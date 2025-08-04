@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\VarExporter\ProxyHelper;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
@@ -18,9 +19,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Php82NullStandaloneRe
 
 class ProxyHelperTest extends TestCase
 {
-    /**
-     * @dataProvider provideExportSignature
-     */
+    #[DataProvider('provideExportSignature')]
     public function testExportSignature(string $expected, \ReflectionMethod $method)
     {
         $this->assertSame($expected, ProxyHelper::exportSignature($method));
@@ -205,9 +204,7 @@ class ProxyHelperTest extends TestCase
         $this->assertSame($expected, ProxyHelper::generateLazyProxy(null, [new \ReflectionClass(TestForProxyHelperInterface1::class), new \ReflectionClass(TestForProxyHelperInterface2::class)]));
     }
 
-    /**
-     * @dataProvider classWithUnserializeMagicMethodProvider
-     */
+    #[DataProvider('classWithUnserializeMagicMethodProvider')]
     public function testGenerateLazyProxyForClassWithUnserializeMagicMethod(object $obj, string $expected)
     {
         $this->assertStringContainsString($expected, ProxyHelper::generateLazyProxy(new \ReflectionClass($obj::class)));
