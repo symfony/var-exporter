@@ -221,20 +221,20 @@ final class ProxyHelper
                 if ('get' === $hook) {
                     $ref = ($method->returnsReference() ? '&' : '');
                     $hooks .= <<<EOPHP
-                            {$ref}get {
-                                return \$this->lazyObjectState->realInstance->{$p->name};
-                            }
+                                {$ref}get {
+                                    return \$this->lazyObjectState->realInstance->{$p->name};
+                                }
 
-                    EOPHP;
+                        EOPHP;
                 } elseif ('set' === $hook) {
                     $parameters = self::exportParameters($method, true);
                     $arg = '$'.$method->getParameters()[0]->name;
                     $hooks .= <<<EOPHP
-                            set({$parameters}) {
-                                \$this->lazyObjectState->realInstance->{$p->name} = {$arg};
-                            }
+                                set({$parameters}) {
+                                    \$this->lazyObjectState->realInstance->{$p->name} = {$arg};
+                                }
 
-                    EOPHP;
+                        EOPHP;
                 } else {
                     throw new LogicException(\sprintf('Cannot generate lazy proxy: hook "%s::%s()" is not supported.', $class->name, $method->name));
                 }
@@ -277,8 +277,8 @@ final class ProxyHelper
                 $body = "        throw new \BadMethodCallException('Cannot forward abstract method \"{$method->class}::{$method->name}()\".');";
             } elseif (str_ends_with($signature, '): never') || str_ends_with($signature, '): void')) {
                 $body = <<<EOPHP
-                        \$this->lazyObjectState->realInstance->{$method->name}({$args});
-                EOPHP;
+                            \$this->lazyObjectState->realInstance->{$method->name}({$args});
+                    EOPHP;
             } else {
                 $mayReturnThis = false;
                 foreach (preg_split('/[()|&]++/', self::exportType($method) ?? 'static') as $type) {
@@ -296,19 +296,19 @@ final class ProxyHelper
 
                 if ($method->returnsReference() || !$mayReturnThis) {
                     $body = <<<EOPHP
-                            return \$this->lazyObjectState->realInstance->{$method->name}({$args});
-                    EOPHP;
+                                return \$this->lazyObjectState->realInstance->{$method->name}({$args});
+                        EOPHP;
                 } else {
                     $body = <<<EOPHP
-                            \${0} = \$this->lazyObjectState->realInstance;
-                            \${1} = \${0}->{$method->name}({$args});
+                                \${0} = \$this->lazyObjectState->realInstance;
+                                \${1} = \${0}->{$method->name}({$args});
 
-                            return match (true) {
-                                \${1} === \${0} => \$this,
-                                !\${1} instanceof \${0} || !\${0} instanceof \${1} => \${1},
-                                null !== \$this->lazyObjectState->cloneInstance =& \${1} => clone \$this,
-                            };
-                    EOPHP;
+                                return match (true) {
+                                    \${1} === \${0} => \$this,
+                                    !\${1} instanceof \${0} || !\${0} instanceof \${1} => \${1},
+                                    null !== \$this->lazyObjectState->cloneInstance =& \${1} => clone \$this,
+                                };
+                        EOPHP;
                 }
             }
             $methods[$lcName] = "    {$signature}\n    {\n{$body}\n    }";
@@ -351,14 +351,14 @@ final class ProxyHelper
         if ($lazyProxyTraitStatement) {
             $lazyProxyTraitStatement = implode("\n        ", $lazyProxyTraitStatement);
             $lazyProxyTraitStatement = <<<EOPHP
-            use \Symfony\Component\VarExporter\Internal\LazyDecoratorTrait {
-                    {$lazyProxyTraitStatement}
-                }
-            EOPHP;
+                use \Symfony\Component\VarExporter\Internal\LazyDecoratorTrait {
+                        {$lazyProxyTraitStatement}
+                    }
+                EOPHP;
         } else {
             $lazyProxyTraitStatement = <<<EOPHP
-            use \Symfony\Component\VarExporter\Internal\LazyDecoratorTrait;
-            EOPHP;
+                use \Symfony\Component\VarExporter\Internal\LazyDecoratorTrait;
+                EOPHP;
         }
 
         return <<<EOPHP
@@ -437,12 +437,12 @@ final class ProxyHelper
                 $body = "        $parentCall;";
             } elseif (str_ends_with($signature, '): never') || str_ends_with($signature, '): void')) {
                 $body = <<<EOPHP
-                        if (isset(\$this->lazyObjectState)) {
-                            (\$this->lazyObjectState->realInstance ??= (\$this->lazyObjectState->initializer)())->{$method->name}({$args});
-                        } else {
-                            {$parentCall};
-                        }
-                EOPHP;
+                            if (isset(\$this->lazyObjectState)) {
+                                (\$this->lazyObjectState->realInstance ??= (\$this->lazyObjectState->initializer)())->{$method->name}({$args});
+                            } else {
+                                {$parentCall};
+                            }
+                    EOPHP;
             } else {
                 if (!$methodsHaveToBeProxied && !$method->isAbstract()) {
                     // Skip proxying methods that might return $this
@@ -459,12 +459,12 @@ final class ProxyHelper
                 }
 
                 $body = <<<EOPHP
-                        if (isset(\$this->lazyObjectState)) {
-                            return (\$this->lazyObjectState->realInstance ??= (\$this->lazyObjectState->initializer)())->{$method->name}({$args});
-                        }
+                            if (isset(\$this->lazyObjectState)) {
+                                return (\$this->lazyObjectState->realInstance ??= (\$this->lazyObjectState->initializer)())->{$method->name}({$args});
+                            }
 
-                        return {$parentCall};
-                EOPHP;
+                            return {$parentCall};
+                    EOPHP;
             }
             $methods[$lcName] = "    {$signature}\n    {\n{$body}\n    }";
         }
@@ -491,10 +491,10 @@ final class ProxyHelper
         ) {
             // fix contravariance type problem when $class declares a `__unserialize()` method without typehint.
             $lazyProxyTraitStatement = <<<EOPHP
-            use \Symfony\Component\VarExporter\LazyProxyTrait {
-                    __unserialize as private __doUnserialize;
-                }
-            EOPHP;
+                use \Symfony\Component\VarExporter\LazyProxyTrait {
+                        __unserialize as private __doUnserialize;
+                    }
+                EOPHP;
 
             $body .= <<<EOPHP
 
@@ -506,8 +506,8 @@ final class ProxyHelper
                 EOPHP;
         } else {
             $lazyProxyTraitStatement = <<<EOPHP
-            use \Symfony\Component\VarExporter\LazyProxyTrait;
-            EOPHP;
+                use \Symfony\Component\VarExporter\LazyProxyTrait;
+                EOPHP;
         }
 
         return <<<EOPHP
