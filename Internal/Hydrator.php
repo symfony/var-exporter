@@ -86,7 +86,7 @@ class Hydrator
                         if ("\0" === $name) {
                             foreach ($values as $i => $v) {
                                 for ($j = 0; $j < \count($v); ++$j) {
-                                    $objects[$i]->attach($v[$j], $v[++$j]);
+                                    $objects[$i][$v[$j]] = $v[++$j];
                                 }
                             }
                             continue;
@@ -194,7 +194,7 @@ class Hydrator
                             continue;
                         }
                         for ($i = 0; $i < \count($value); ++$i) {
-                            $object->attach($value[$i], $value[++$i]);
+                            $object[$value[$i]] = $value[++$i];
                         }
                     }
                 };
