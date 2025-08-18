@@ -468,19 +468,33 @@ class __UnserializeButNo__Serialize
     }
 }
 
-class __SerializeButNo__Unserialize
+class ParentOf__SerializeButNo__Unserialize
 {
-    public $foo;
+    private $foo = 'foo';
+
+    public function getFoo()
+    {
+        return $this->foo;
+    }
+}
+
+class __SerializeButNo__Unserialize extends ParentOf__SerializeButNo__Unserialize
+{
+    public $baz;
+    private $bar;
 
     public function __construct()
     {
-        $this->foo = 'ccc';
+        $this->baz = 'ccc';
+        $this->bar = 'ddd';
     }
 
     public function __serialize(): array
     {
         return [
-            'foo' => $this->foo,
+            'foo' => $this->getFoo(),
+            'baz' => $this->baz,
+            'bar' => $this->bar,
         ];
     }
 }
