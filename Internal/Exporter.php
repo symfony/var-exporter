@@ -76,33 +76,23 @@ class Exporter
             $class = $value::class;
             $reflector = Registry::$reflectors[$class] ??= Registry::getClassReflector($class);
             $properties = [];
+            $sleep = null;
+            $proto = Registry::$prototypes[$class];
 
             if ($reflector->hasMethod('__serialize')) {
                 if (!$reflector->getMethod('__serialize')->isPublic()) {
                     throw new \Error(\sprintf('Call to %s method "%s::__serialize()".', $reflector->getMethod('__serialize')->isProtected() ? 'protected' : 'private', $class));
                 }
 
-                if (!\is_array($serializeProperties = $value->__serialize())) {
+                if (!\is_array($arrayValue = $value->__serialize())) {
                     throw new \TypeError($class.'::__serialize() must return an array');
                 }
 
                 if ($reflector->hasMethod('__unserialize')) {
-                    $properties = $serializeProperties;
-                } else {
-                    foreach ($serializeProperties as $n => $v) {
-                        $p = $reflector->hasProperty($n) ? $reflector->getProperty($n) : null;
-                        $c = $p && (\PHP_VERSION_ID >= 80400 ? $p->isProtectedSet() || $p->isPrivateSet() : $p->isReadOnly()) ? $p->class : 'stdClass';
-                        $properties[$c][$n] = $v;
-                    }
+                    $properties = $arrayValue;
+                    goto prepare_value;
                 }
-
-                goto prepare_value;
-            }
-
-            $sleep = null;
-            $proto = Registry::$prototypes[$class];
-
-            if (($value instanceof \ArrayIterator || $value instanceof \ArrayObject) && null !== $proto) {
+            } elseif (($value instanceof \ArrayIterator || $value instanceof \ArrayObject) && null !== $proto) {
                 // ArrayIterator and ArrayObject need special care because their "flags"
                 // option changes the behavior of the (array) casting operator.
                 [$arrayValue, $properties] = self::getArrayObjectProperties($value, $proto);
@@ -118,9 +108,7 @@ class Exporter
                 }
                 $properties = ['SplObjectStorage' => ["\0" => $properties]];
                 $arrayValue = (array) $value;
-            } elseif ($value instanceof \Serializable
-                || $value instanceof \__PHP_Incomplete_Class
-            ) {
+            } elseif ($value instanceof \Serializable || $value instanceof \__PHP_Incomplete_Class) {
                 ++$objectsCount;
                 $objectsPool[$value] = [$id = \count($objectsPool), serialize($value), [], 0];
                 $value = new Reference($id);
@@ -144,16 +132,15 @@ class Exporter
                 $i = 0;
                 $n = (string) $name;
                 if ('' === $n || "\0" !== $n[0]) {
-                    $p = $reflector->hasProperty($n) ? $reflector->getProperty($n) : null;
-                    $c = $p && (\PHP_VERSION_ID >= 80400 ? $p->isProtectedSet() || $p->isPrivateSet() : $p->isReadOnly()) ? $p->class : 'stdClass';
+                    $parent = $reflector;
+                    do {
+                        $p = $parent->hasProperty($n) ? $parent->getProperty($n) : null;
+                    } while (!$p && $parent = $parent->getParentClass());
+
+                    $c = $p && (!$p->isPublic() || (\PHP_VERSION_ID >= 80400 ? $p->isProtectedSet() || $p->isPrivateSet() : $p->isReadOnly())) ? $p->class : 'stdClass';
                 } elseif ('*' === $n[1]) {
                     $n = substr($n, 3);
                     $c = $reflector->getProperty($n)->class;
-                    if ('Error' === $c) {
-                        $c = 'TypeError';
-                    } elseif ('Exception' === $c) {
-                        $c = 'ErrorException';
-                    }
                 } else {
                     $i = strpos($n, "\0", 2);
                     $c = substr($n, 1, $i - 1);
@@ -166,8 +153,14 @@ class Exporter
                     }
                     unset($sleep[$name], $sleep[$n]);
                 }
-                if (!\array_key_exists($name, $proto) || $proto[$name] !== $v || "\x00Error\x00trace" === $name || "\x00Exception\x00trace" === $name) {
+                if ("\x00Error\x00trace" === $name || "\x00Exception\x00trace" === $name) {
                     $properties[$c][$n] = $v;
+                } elseif (!\array_key_exists($name, $proto) || $proto[$name] !== $v) {
+                    $properties[match ($c) {
+                        'Error' => 'TypeError',
+                        'Exception' => 'ErrorException',
+                        default => $c,
+                    }][$n] = $v;
                 }
             }
             if ($sleep) {
