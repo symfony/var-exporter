@@ -22,6 +22,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\FooReadonly;
 use Symfony\Component\VarExporter\Tests\Fixtures\FooSerializable;
 use Symfony\Component\VarExporter\Tests\Fixtures\FooUnitEnum;
 use Symfony\Component\VarExporter\Tests\Fixtures\MySerializable;
+use Symfony\Component\VarExporter\Tests\Fixtures\PrivateFCC;
 use Symfony\Component\VarExporter\VarExporter;
 
 class VarExporterTest extends TestCase
@@ -80,7 +81,7 @@ class VarExporterTest extends TestCase
     public function testExport(string $testName, $value, bool $staticValueExpected = false)
     {
         $dumpedValue = $this->getDump($value);
-        $isStaticValue = true;
+        $isStaticValue = null;
         $marshalledValue = VarExporter::export($value, $isStaticValue);
 
         $this->assertSame($staticValueExpected, $isStaticValue);
@@ -99,7 +100,7 @@ class VarExporterTest extends TestCase
         }
         $marshalledValue = include $fixtureFile;
 
-        if (!$isStaticValue) {
+        if (!$isStaticValue || 'named-closure-static' === $testName || 'private-fcc' === $testName) {
             if ($value instanceof MyWakeup) {
                 $value->bis = null;
             }
@@ -234,11 +235,20 @@ class VarExporterTest extends TestCase
         yield ['unit-enum', [FooUnitEnum::Bar], true];
         yield ['readonly', new FooReadonly('k', 'v')];
 
+        yield ['named-closure-method', (new TestClass())->testMethod(...)];
+        yield ['named-closure-static', TestClass::testStaticMethod(...), true];
+
         if (\PHP_VERSION_ID < 80400) {
             return;
         }
 
         yield ['backed-property', new BackedProperty('name')];
+
+        if (\PHP_VERSION_ID < 80500) {
+            return;
+        }
+
+        yield ['private-fcc', (new \ReflectionClass(PrivateFCC::class))->getAttributes(PrivateFCC::class)[0]->getArguments()[0], true];
     }
 
     public function testUnicodeDirectionality()
@@ -296,6 +306,19 @@ class PrivateConstructor
     private function __construct($prop)
     {
         $this->prop = $prop;
+    }
+}
+
+class TestClass
+{
+    public function testMethod()
+    {
+        return 'test';
+    }
+
+    public static function testStaticMethod()
+    {
+        return 'test';
     }
 }
 
