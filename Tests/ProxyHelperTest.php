@@ -18,7 +18,7 @@ use Symfony\Component\VarExporter\ProxyHelper;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Php82NullStandaloneReturnType;
 
-#[RequiresPhp('8.4')]
+#[RequiresPhp('>=8.4')]
 class ProxyHelperTest extends TestCase
 {
     #[DataProvider('provideExportSignature')]
@@ -278,7 +278,7 @@ class ProxyHelperTest extends TestCase
         );
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testPropertyHooks()
     {
         $proxyCode = ProxyHelper::generateLazyProxy(new \ReflectionClass(Hooked::class));

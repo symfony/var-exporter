@@ -32,7 +32,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestUnserializeClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestWakeupClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
 
-#[RequiresPhp('8.4')]
+#[RequiresPhp('>=8.4')]
 class LazyProxyTraitTest extends TestCase
 {
     public function testGetter()
@@ -303,7 +303,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(234, $object->foo);
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testConcretePropertyHooks()
     {
         $initialized = false;
@@ -330,7 +330,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(345, $object->backed);
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testAbstractPropertyHooks()
     {
         $initialized = false;
@@ -362,7 +362,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertTrue($initialized);
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testAsymmetricVisibility()
     {
         $object = $this->createLazyProxy(AsymmetricVisibility::class, function () {

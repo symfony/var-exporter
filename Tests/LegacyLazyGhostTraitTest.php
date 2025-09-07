@@ -242,7 +242,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertSame([123], $proxy->foo);
     }
 
-    #[RequiresPhp('8.3')]
+    #[RequiresPhp('>=8.3')]
     public function testReadOnlyClass()
     {
         $proxy = $this->createLazyGhost(ReadOnlyClass::class, fn ($proxy) => $proxy->__construct(123));
@@ -296,7 +296,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertSame(3, $object->public);
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testPropertyHooks()
     {
         $initialized = false;
@@ -319,7 +319,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertSame(345, $object->backed);
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testPropertyHooksWithDefaultValue()
     {
         $initialized = false;
@@ -345,7 +345,7 @@ class LegacyLazyGhostTraitTest extends TestCase
         $this->assertTrue($object->backedBoolWithDefault);
     }
 
-    #[RequiresPhp('8.4')]
+    #[RequiresPhp('>=8.4')]
     public function testAsymmetricVisibility()
     {
         $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) {
