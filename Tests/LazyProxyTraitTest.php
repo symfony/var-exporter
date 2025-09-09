@@ -291,7 +291,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(234, $object->foo);
     }
 
-    #[RequiresPhp('8.3')]
+    #[RequiresPhp('>=8.3')]
     public function testReinitReadonlyLazyProxy()
     {
         $object = $this->createLazyProxy(ReadOnlyClass::class, fn () => new ConcreteReadOnlyClass(123));
