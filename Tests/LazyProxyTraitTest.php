@@ -30,6 +30,26 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestUnserializeClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestWakeupClass;
 use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
 
+$errorHandler = set_error_handler(static function (int $errno, string $errstr) use (&$errorHandler) {
+    if (\E_DEPRECATED === $errno && str_contains($errstr, 'serialize()')) {
+        // We're testing if the component handles deprecated Serializable and __sleep/wakeup implementations well.
+        // This kind of implementation triggers a deprecation warning that we explicitly want to ignore here.
+        return true;
+    }
+
+    return $errorHandler ? $errorHandler(...\func_get_args()) : false;
+});
+
+try {
+    foreach ([
+        TestWakeupClass::class,
+    ] as $class) {
+        class_exists($class);
+    }
+} finally {
+    restore_error_handler();
+}
+
 class LazyProxyTraitTest extends TestCase
 {
     public function testGetter()
