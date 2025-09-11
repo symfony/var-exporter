@@ -12,6 +12,8 @@
 namespace Symfony\Component\VarExporter\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Serializer\Mapping\AttributeMetadata;
+use Symfony\Component\Serializer\Mapping\ClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -28,6 +30,28 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\AsymmetricVisibility;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\Hooked;
 use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\HookedWithDefaultValue;
 use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
+
+$errorHandler = set_error_handler(static function (int $errno, string $errstr) use (&$errorHandler) {
+    if (\E_DEPRECATED === $errno && str_contains($errstr, 'serialize()')) {
+        // We're testing if the component handles deprecated Serializable and __sleep/wakeup implementations well.
+        // This kind of implementation triggers a deprecation warning that we explicitly want to ignore here.
+        return true;
+    }
+
+    return $errorHandler ? $errorHandler(...\func_get_args()) : false;
+});
+
+try {
+    foreach ([
+        MagicClass::class,
+        ClassMetadata::class,
+        AttributeMetadata::class,
+    ] as $class) {
+        class_exists($class);
+    }
+} finally {
+    restore_error_handler();
+}
 
 /**
  * @group legacy
