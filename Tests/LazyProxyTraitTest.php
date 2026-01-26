@@ -374,16 +374,12 @@ class LazyProxyTraitTest extends TestCase
 
     public function testAsymmetricVisibility()
     {
-        $object = $this->createLazyProxy(AsymmetricVisibility::class, static function () {
-            return new AsymmetricVisibility(123, 234);
-        });
+        $object = $this->createLazyProxy(AsymmetricVisibility::class, static fn () => new AsymmetricVisibility(123, 234));
 
         $this->assertSame(123, $object->foo);
         $this->assertSame(234, $object->getBar());
 
-        $object = $this->createLazyProxy(AsymmetricVisibility::class, static function () {
-            return new AsymmetricVisibility(123, 234);
-        });
+        $object = $this->createLazyProxy(AsymmetricVisibility::class, static fn () => new AsymmetricVisibility(123, 234));
 
         $this->assertSame(234, $object->getBar());
         $this->assertSame(123, $object->foo);
