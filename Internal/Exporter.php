@@ -20,12 +20,16 @@ use Symfony\Component\VarExporter\Exception\NotInstantiableTypeException;
  */
 class Exporter
 {
+    private static array $scopeMaps = [];
+    private static array $protos = [];
+    private static array $classInfo = [];
+
     /**
      * Prepares an array of values for VarExporter.
      *
      * For performance this method is public and has no type-hints.
      *
-     * @param array             &$values
+     * @param array             $values
      * @param \SplObjectStorage $objectsPool
      * @param array             &$refsPool
      * @param int               &$objectsCount
@@ -87,16 +91,16 @@ class Exporter
             $sleep = null;
             $proto = Registry::$prototypes[$class];
 
-            if ($reflector->hasMethod('__serialize')) {
-                if (!$reflector->getMethod('__serialize')->isPublic()) {
-                    throw new \Error(\sprintf('Call to %s method "%s::__serialize()".', $reflector->getMethod('__serialize')->isProtected() ? 'protected' : 'private', $class));
+            if (self::$classInfo[$class][2] ??= $reflector->hasMethod('__serialize') ? ($reflector->getMethod('__serialize')->isPublic() ?: $reflector->getMethod('__serialize')) : false) {
+                if (self::$classInfo[$class][2] instanceof \ReflectionMethod) {
+                    throw new \Error(\sprintf('Call to %s method "%s::__serialize()".', self::$classInfo[$class][2]->isProtected() ? 'protected' : 'private', $class));
                 }
 
                 if (!\is_array($arrayValue = $value->__serialize())) {
                     throw new \TypeError($class.'::__serialize() must return an array');
                 }
 
-                if ($reflector->hasMethod('__unserialize')) {
+                if (self::$classInfo[$class][0] ??= method_exists($class, '__unserialize')) {
                     $properties = $arrayValue;
                     goto prepare_value;
                 }
@@ -122,7 +126,7 @@ class Exporter
                 $value = new Reference($id);
                 goto handle_value;
             } else {
-                if (method_exists($class, '__sleep')) {
+                if (self::$classInfo[$class][3] ??= method_exists($class, '__sleep')) {
                     if (!\is_array($sleep = $value->__sleep())) {
                         trigger_error('serialize(): __sleep should return an array only containing the names of instance-variables to serialize', \E_USER_NOTICE);
                         $value = null;
@@ -134,21 +138,29 @@ class Exporter
                 $arrayValue = (array) $value;
             }
 
-            $proto = (array) $proto;
+            $proto = self::$protos[$class] ??= (array) $proto;
+
+            if (null === $scopeMap = self::$scopeMaps[$class] ?? null) {
+                $scopeMap = [];
+                $parent = $reflector;
+                do {
+                    foreach ($parent->getProperties() as $p) {
+                        if (!$p->isStatic() && !isset($scopeMap[$p->name])) {
+                            $scopeMap[$p->name] = !$p->isPublic() || $p->isProtectedSet() || $p->isPrivateSet() ? $p->class : 'stdClass';
+                        }
+                    }
+                } while ($parent = $parent->getParentClass());
+                self::$scopeMaps[$class] = $scopeMap;
+            }
 
             foreach ($arrayValue as $name => $v) {
                 $i = 0;
                 $n = (string) $name;
                 if ('' === $n || "\0" !== $n[0]) {
-                    $parent = $reflector;
-                    do {
-                        $p = $parent->hasProperty($n) ? $parent->getProperty($n) : null;
-                    } while (!$p && $parent = $parent->getParentClass());
-
-                    $c = $p && (!$p->isPublic() || $p->isProtectedSet() || $p->isPrivateSet()) ? $p->class : 'stdClass';
+                    $c = $scopeMap[$n] ?? 'stdClass';
                 } elseif ('*' === $n[1]) {
                     $n = substr($n, 3);
-                    $c = $reflector->getProperty($n)->class;
+                    $c = $scopeMap[$n] ?? $reflector->getProperty($n)->class;
                 } else {
                     $i = strpos($n, "\0", 2);
                     $c = substr($n, 1, $i - 1);
@@ -176,15 +188,17 @@ class Exporter
                     trigger_error(\sprintf('serialize(): "%s" returned as member variable from __sleep() but does not exist', $n), \E_USER_NOTICE);
                 }
             }
-            if (method_exists($class, '__unserialize')) {
+            $hasUnserialize = self::$classInfo[$class][0] ??= method_exists($class, '__unserialize');
+            if ($hasUnserialize) {
                 $properties = $arrayValue;
             }
 
             prepare_value:
+            $hasUnserialize ??= self::$classInfo[$class][0] ??= method_exists($class, '__unserialize');
             $objectsPool[$value] = [$id = \count($objectsPool)];
             $properties = self::prepare($properties, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
             ++$objectsCount;
-            $objectsPool[$value] = [$id, $class, $properties, method_exists($class, '__unserialize') ? -$objectsCount : (method_exists($class, '__wakeup') ? $objectsCount : 0)];
+            $objectsPool[$value] = [$id, $class, $properties, $hasUnserialize ? -$objectsCount : ((self::$classInfo[$class][1] ??= method_exists($class, '__wakeup')) ? $objectsCount : 0)];
 
             $value = new Reference($id);
 

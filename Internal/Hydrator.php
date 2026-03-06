@@ -92,10 +92,12 @@ class Hydrator
                 };
         }
 
-        if (!class_exists($class) && !interface_exists($class, false) && !trait_exists($class, false)) {
-            throw new ClassNotFoundException($class);
+        if (!$classReflector = Registry::$reflectors[$class] ?? null) {
+            if (!class_exists($class) && !interface_exists($class, false) && !trait_exists($class, false)) {
+                throw new ClassNotFoundException($class);
+            }
+            $classReflector = Registry::$reflectors[$class] = new \ReflectionClass($class);
         }
-        $classReflector = new \ReflectionClass($class);
 
         switch ($class) {
             case 'ArrayIterator':
@@ -194,10 +196,12 @@ class Hydrator
                 };
         }
 
-        if (!class_exists($class) && !interface_exists($class, false) && !trait_exists($class, false)) {
-            throw new ClassNotFoundException($class);
+        if (!$classReflector = Registry::$reflectors[$class] ?? null) {
+            if (!class_exists($class) && !interface_exists($class, false) && !trait_exists($class, false)) {
+                throw new ClassNotFoundException($class);
+            }
+            $classReflector = Registry::$reflectors[$class] = new \ReflectionClass($class);
         }
-        $classReflector = new \ReflectionClass($class);
 
         switch ($class) {
             case 'ArrayIterator':
@@ -262,7 +266,7 @@ class Hydrator
     public static function getPropertyScopes($class): array
     {
         $propertyScopes = [];
-        $r = new \ReflectionClass($class);
+        $r = Registry::$reflectors[$class] ?? new \ReflectionClass($class);
 
         foreach ($r->getProperties() as $property) {
             $flags = $property->getModifiers();

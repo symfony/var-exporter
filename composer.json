@@ -1,8 +1,8 @@
 {
     "name": "symfony/var-exporter",
     "type": "library",
-    "description": "Allows exporting any serializable PHP data structure to plain PHP code",
-    "keywords": ["export", "serialize", "instantiate", "hydrate", "construct", "clone", "lazy-loading", "proxy"],
+    "description": "Provides tools to export, instantiate, hydrate, clone and lazy-load PHP objects",
+    "keywords": ["export", "serialize", "instantiate", "hydrate", "construct", "clone", "deep-clone", "lazy-loading", "proxy"],
     "homepage": "https://symfony.com",
     "license": "MIT",
     "authors": [

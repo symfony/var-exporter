@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+8.1
+---
+
+ * Add `DeepCloner` to deep-clone PHP values while preserving copy-on-write benefits
+
 8.0
 ---
 

@@ -11,6 +11,9 @@ of objects:
 - `Instantiator::instantiate()` creates an object and sets its properties without
   calling its constructor nor any other methods;
 - `Hydrator::hydrate()` can set the properties of an existing object;
+- `DeepCloner` deep-clones PHP values while preserving copy-on-write benefits
+  for strings and arrays, making it faster and more memory efficient than
+  `unserialize(serialize())`;
 - `Lazy*Trait` can make a class behave as a lazy-loading ghost or virtual proxy.
 
 VarExporter::export()
@@ -55,6 +58,26 @@ Hydrator::hydrate($object, ["\0Bar\0privateBarProperty" => $propertyValue]);
 Hydrator::hydrate($object, [], [
     Bar::class => ['privateBarProperty' => $propertyValue],
 ]);
+```
+
+DeepCloner
+----------
+
+`DeepCloner::deepClone()` deep-clones a PHP value. Unlike
+`unserialize(serialize())`, it preserves PHP's copy-on-write semantics for
+strings and arrays, resulting in lower memory usage and better performance:
+
+```php
+$clone = DeepCloner::deepClone($originalObject);
+```
+
+For repeated cloning of the same structure, create an instance to amortize the
+cost of graph analysis:
+
+```php
+$cloner = new DeepCloner($prototype);
+$clone1 = $cloner->clone();
+$clone2 = $cloner->clone();
 ```
 
 Lazy Proxies
