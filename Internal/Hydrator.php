@@ -231,7 +231,11 @@ class Hydrator
                 if (\PHP_VERSION_ID >= 80400 && !$propertyReflector->isAbstract() && $propertyReflector->getHooks()) {
                     $notByRef->{$propertyReflector->name} = $propertyReflector->setRawValue(...);
                 } elseif ($propertyReflector->isReadOnly()) {
-                    $notByRef->{$propertyReflector->name} = true;
+                    $notByRef->{$propertyReflector->name} = static function ($object, $value) use ($propertyReflector) {
+                        if (!$propertyReflector->isInitialized($object)) {
+                            $propertyReflector->setValue($object, $value);
+                        }
+                    };
                 }
             }
 
