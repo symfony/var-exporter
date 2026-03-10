@@ -117,6 +117,10 @@ final class DeepCloner
                     $properties[$scope][$name][$id] = $propValue;
                     if ($propValue instanceof Reference || $propValue instanceof NamedClosure || \is_array($propValue) && self::hasReference($propValue)) {
                         $resolve[$scope][$name][] = $id;
+
+                        if ($canCloneAll && ((InternalHydrator::$propertyScopes[$scope] ??= InternalHydrator::getPropertyScopes($scope))[$name][4] ?? null)?->isReadOnly()) {
+                            $canCloneAll = false;
+                        }
                     }
                 }
             }

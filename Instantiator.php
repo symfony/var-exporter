@@ -40,7 +40,11 @@ final class Instantiator
      */
     public static function instantiate(string $class, array $properties = [], array $scopedProperties = []): object
     {
-        $reflector = Registry::$reflectors[$class] ??= Registry::getClassReflector($class);
+        if (!\array_key_exists($class, Registry::$cloneable)) {
+            Registry::getClassReflector($class);
+        }
+
+        $reflector = Registry::$reflectors[$class] ??= Registry::getClassReflector($class, Registry::$instantiableWithoutConstructor[$class], Registry::$cloneable[$class]);
 
         if (Registry::$cloneable[$class]) {
             $instance = clone Registry::$prototypes[$class];

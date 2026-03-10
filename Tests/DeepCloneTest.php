@@ -183,6 +183,21 @@ class DeepCloneTest extends TestCase
         $this->assertSame('world', $clone->value);
     }
 
+    public function testReadonlyPropertyContainingReferences()
+    {
+        $child = new \stdClass();
+        $child->value = 'inner';
+
+        $obj = new DeepCloneReadonlyReference(DeepCloneReadonlyReference::class, ['child' => $child]);
+
+        $clone = DeepCloner::deepClone($obj);
+
+        $this->assertNotSame($obj, $clone);
+        $this->assertSame($obj->class, $clone->class);
+        $this->assertNotSame($child, $clone->data['child']);
+        $this->assertSame('inner', $clone->data['child']->value);
+    }
+
     public function testPrivateAndProtectedProperties()
     {
         $obj = new GoodNight();
@@ -424,5 +439,14 @@ class DeepCloneTest extends TestCase
 
         $this->assertFalse((new DeepCloner(new \stdClass()))->isStaticValue());
         $this->assertFalse((new DeepCloner(['key' => new \stdClass()]))->isStaticValue());
+    }
+}
+
+class DeepCloneReadonlyReference
+{
+    public function __construct(
+        public readonly string $class,
+        public readonly array $data,
+    ) {
     }
 }

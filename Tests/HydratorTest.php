@@ -38,6 +38,19 @@ class HydratorTest extends TestCase
 
         $this->assertSame(456, $object->getValue());
     }
+
+    public function testHydrateUninitializedReadonlyPropertyAfterHydratorPrimedReflector()
+    {
+        Hydrator::hydrate(new HydratorTestClass(123), [
+            'status' => 'hydrated',
+        ]);
+
+        $object = Instantiator::instantiate(HydratorTestClass::class);
+
+        Hydrator::hydrate($object, ['value' => 456]);
+
+        $this->assertSame(456, $object->getValue());
+    }
 }
 
 class HydratorTestClass
