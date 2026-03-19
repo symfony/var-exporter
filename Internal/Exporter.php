@@ -23,38 +23,42 @@ class Exporter
     private static array $scopeMaps = [];
     private static array $protos = [];
     private static array $classInfo = [];
+    private static $sentinel;
 
     /**
      * Prepares an array of values for VarExporter.
      *
      * For performance this method is public and has no type-hints.
      *
-     * @param array             $values
-     * @param \SplObjectStorage $objectsPool
-     * @param array             &$refsPool
-     * @param int               &$objectsCount
-     * @param bool              &$valuesAreStatic
+     * @param array $values
+     * @param array &$objectsPool
+     * @param array &$refsPool
+     * @param int   &$objectsCount
+     * @param bool  &$valuesAreStatic
+     * @param array &$mask
      *
      * @return array
      *
      * @throws NotInstantiableTypeException When a value cannot be serialized
      */
-    public static function prepare($values, $objectsPool, &$refsPool, &$objectsCount, &$valuesAreStatic)
+    public static function prepare($values, &$objectsPool, &$refsPool, &$objectsCount, &$valuesAreStatic, &$mask = null)
     {
+        $sentinel = self::$sentinel ??= new \stdClass();
         $refs = $values;
         foreach ($values as $k => $value) {
             if (\is_resource($value)) {
                 throw new NotInstantiableTypeException(get_resource_type($value).' resource');
             }
-            $refs[$k] = $objectsPool;
+            $refs[$k] = $sentinel;
 
-            if ($isRef = !$valueIsStatic = $values[$k] !== $objectsPool) {
+            if ($isRef = !$valueIsStatic = $values[$k] !== $sentinel) {
                 $values[$k] = &$value; // Break hard references to make $values completely
                 unset($value);         // independent from the original structure
                 $refs[$k] = $value = $values[$k];
                 if ($value instanceof Reference && 0 > $value->id) {
                     $valuesAreStatic = false;
                     ++$value->count;
+                    $mask[$k] = false;
                     continue;
                 }
                 $refsPool[] = [&$refs[$k], $value, &$value];
@@ -63,7 +67,11 @@ class Exporter
 
             if (\is_array($value)) {
                 if ($value) {
-                    $value = self::prepare($value, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
+                    $m = null;
+                    $value = self::prepare($value, $objectsPool, $refsPool, $objectsCount, $valueIsStatic, $m);
+                    if (null !== $m) {
+                        $mask[$k] = $m;
+                    }
                 }
                 goto handle_value;
             } elseif (!\is_object($value) || $value instanceof \UnitEnum) {
@@ -71,21 +79,39 @@ class Exporter
             }
 
             $valueIsStatic = false;
-            if (isset($objectsPool[$value])) {
+            $oid = spl_object_id($value);
+            if (isset($objectsPool[$oid])) {
                 ++$objectsCount;
-                $value = new Reference($objectsPool[$value][0]);
+                $value = $objectsPool[$oid][0];
+                $mask[$k] = true;
                 goto handle_value;
             }
 
             if ($value instanceof \Closure && !($r = new \ReflectionFunction($value))->isAnonymous()) {
                 $callable = [$r->getClosureThis() ?? $r->getClosureCalledClass()?->name, $r->name];
-                $r = $callable[0] ? new \ReflectionMethod(...$callable) : null;
-                $value = new NamedClosure(self::prepare($callable, $objectsPool, $refsPool, $objectsCount, $valueIsStatic), $r);
+                $rm = $callable[0] ? new \ReflectionMethod(...$callable) : null;
+                $callable = self::prepare($callable, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
+                $value = !($rm?->isPublic() ?? true) ? [$callable, $rm->class, $rm->name] : $callable;
+                $mask[$k] = 0;
 
                 goto handle_value;
             }
 
             $class = $value::class;
+
+            if ('stdClass' === $class) {
+                Registry::$reflectors[$class] ??= Registry::getClassReflector($class);
+                $arrayValue = (array) $value;
+                $objectsPool[$oid] = [$id = \count($objectsPool)];
+                $m = null;
+                $properties = $arrayValue ? self::prepare(['stdClass' => $arrayValue], $objectsPool, $refsPool, $objectsCount, $valueIsStatic, $m) : [];
+                ++$objectsCount;
+                $objectsPool[$oid] = [$id, 'stdClass', $properties, 0, $value, $m];
+                $value = $id;
+                $mask[$k] = true;
+                goto handle_value;
+            }
+
             $reflector = Registry::$reflectors[$class] ??= Registry::getClassReflector($class);
             $properties = [];
             $sleep = null;
@@ -93,7 +119,7 @@ class Exporter
 
             if (self::$classInfo[$class][2] ??= $reflector->hasMethod('__serialize') ? ($reflector->getMethod('__serialize')->isPublic() ?: $reflector->getMethod('__serialize')) : false) {
                 if (self::$classInfo[$class][2] instanceof \ReflectionMethod) {
-                    throw new \Error(\sprintf('Call to %s method "%s::__serialize()".', self::$classInfo[$class][2]->isProtected() ? 'protected' : 'private', $class));
+                    throw new \Error('Call to '.(self::$classInfo[$class][2]->isProtected() ? 'protected' : 'private').' method "'.$class.'::__serialize()".');
                 }
 
                 if (!\is_array($arrayValue = $value->__serialize())) {
@@ -122,8 +148,9 @@ class Exporter
                 $arrayValue = (array) $value;
             } elseif ($value instanceof \Serializable || $value instanceof \__PHP_Incomplete_Class) {
                 ++$objectsCount;
-                $objectsPool[$value] = [$id = \count($objectsPool), serialize($value), [], 0];
-                $value = new Reference($id);
+                $objectsPool[$oid] = [$id = \count($objectsPool), serialize($value), [], 0, $value, null];
+                $value = $id;
+                $mask[$k] = true;
                 goto handle_value;
             } else {
                 if (self::$classInfo[$class][3] ??= $reflector->hasMethod('__sleep')) {
@@ -173,14 +200,8 @@ class Exporter
                     }
                     unset($sleep[$name], $sleep[$n]);
                 }
-                if ("\x00Error\x00trace" === $name || "\x00Exception\x00trace" === $name) {
+                if ("\x00Error\x00trace" === $name || "\x00Exception\x00trace" === $name || !\array_key_exists($name, $proto) || $proto[$name] !== $v) {
                     $properties[$c][$n] = $v;
-                } elseif (!\array_key_exists($name, $proto) || $proto[$name] !== $v) {
-                    $properties[match ($c) {
-                        'Error' => 'TypeError',
-                        'Exception' => 'ErrorException',
-                        default => $c,
-                    }][$n] = $v;
                 }
             }
             if ($sleep) {
@@ -193,15 +214,18 @@ class Exporter
             }
 
             prepare_value:
-            $objectsPool[$value] = [$id = \count($objectsPool)];
-            $properties = self::prepare($properties, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
+            $objectsPool[$oid] = [$id = \count($objectsPool)];
+            $m = null;
+            $properties = self::prepare($properties, $objectsPool, $refsPool, $objectsCount, $valueIsStatic, $m);
             ++$objectsCount;
-            $objectsPool[$value] = [$id, $class, $properties, $hasUnserialize ? -$objectsCount : ((self::$classInfo[$class][1] ??= $reflector->hasMethod('__wakeup')) ? $objectsCount : 0)];
+            $objectsPool[$oid] = [$id, $class, $properties, $hasUnserialize ? -$objectsCount : ((self::$classInfo[$class][1] ??= $reflector->hasMethod('__wakeup')) ? $objectsCount : 0), $value, $m];
 
-            $value = new Reference($id);
+            $value = $id;
+            $mask[$k] = true;
 
             handle_value:
             if ($isRef) {
+                $mask[$k] = false;
                 unset($value); // Break the hard reference created above
             } elseif (!$valueIsStatic) {
                 $values[$k] = $value;
@@ -224,31 +248,7 @@ class Exporter
             case $value instanceof \UnitEnum: return '\\'.ltrim(var_export($value, true), '\\');
         }
 
-        if ($value instanceof Reference) {
-            if (0 <= $value->id) {
-                return '$o['.$value->id.']';
-            }
-            if (!$value->count) {
-                return self::export($value->value, $indent);
-            }
-            $value = -$value->id;
-
-            return '&$r['.$value.']';
-        }
         $subIndent = $indent.'    ';
-
-        if ($value instanceof NamedClosure) {
-            if ($value->method?->isPublic() ?? true) {
-                return match (true) {
-                    null === $value->callable[0] => '\\'.$value->callable[1],
-                    \is_string($value->callable[0]) => '\\'.$value->callable[0].'::'.$value->callable[1],
-                    \is_object($value->callable[0]) => self::export($value->callable[0], $subIndent).'->'.$value->callable[1],
-                }.'(...)';
-            }
-
-            return 'new \ReflectionMethod(\\'.$value->method->class.'::class, '.self::export($value->callable[1]).')'
-                .'->getClosure('.(\is_object($value->callable[0]) ? self::export($value->callable[0]) : '').')';
-        }
 
         if (\is_string($value)) {
             $code = \sprintf("'%s'", addcslashes($value, "'\\"));
@@ -278,131 +278,85 @@ class Exporter
             return $code;
         }
 
-        if (\is_array($value)) {
+        if (!\is_array($value)) {
+            throw new \UnexpectedValueException(\sprintf('Cannot export value of type "%s".', get_debug_type($value)));
+        }
+        $j = -1;
+        $code = '';
+        $isFlat = '' !== $indent;
+        $size = 0;
+        foreach ($value as $k => $v) {
+            $code .= $subIndent;
+            if (!\is_int($k) || 1 !== $k - $j) {
+                $code .= self::export($k, $subIndent).' => ';
+                ++$size;
+            }
+            if (\is_int($k) && $k > $j) {
+                $j = $k;
+            }
+            if (\is_array($v)) {
+                $isFlat = false;
+            }
+            $code .= self::export($v, $subIndent).",\n";
+            ++$size;
+        }
+
+        if (!$isFlat) {
+            return "[\n".$code.$indent.']';
+        }
+
+        // Single-line: content fits within the 20-items budget
+        if ($size <= 20) {
             $j = -1;
-            $code = '';
+            $code = '[';
             foreach ($value as $k => $v) {
-                $code .= $subIndent;
+                if ('[' !== $code) {
+                    $code .= ', ';
+                }
                 if (!\is_int($k) || 1 !== $k - $j) {
-                    $code .= self::export($k, $subIndent).' => ';
+                    $code .= self::export($k, $indent).' => ';
                 }
                 if (\is_int($k) && $k > $j) {
                     $j = $k;
                 }
-                $code .= self::export($v, $subIndent).",\n";
+                $code .= self::export($v, $indent);
             }
 
-            return "[\n".$code.$indent.']';
+            return $code.']';
         }
 
-        if ($value instanceof Values) {
-            $code = $subIndent."\$r = [],\n";
-            foreach ($value->values as $k => $v) {
-                $code .= $subIndent.'$r['.$k.'] = '.self::export($v, $subIndent).",\n";
-            }
-
-            return "[\n".$code.$indent.']';
-        }
-
-        if ($value instanceof Registry) {
-            return self::exportRegistry($value, $indent, $subIndent);
-        }
-
-        if ($value instanceof Hydrator) {
-            return self::exportHydrator($value, $indent, $subIndent);
-        }
-
-        throw new \UnexpectedValueException(\sprintf('Cannot export value of type "%s".', get_debug_type($value)));
-    }
-
-    private static function exportRegistry(Registry $value, string $indent, string $subIndent): string
-    {
-        $code = '';
-        $serializables = [];
-        $seen = [];
-        $prototypesAccess = 0;
-        $factoriesAccess = 0;
-        $r = '\\'.Registry::class;
+        // Multi-line wrapped: pack values onto each line; before appending the next
+        // value, check that the line would still hold <= 20 items.
         $j = -1;
-
-        foreach ($value->classes as $k => $class) {
-            if (':' === ($class[1] ?? null)) {
-                $serializables[$k] = $class;
-                continue;
-            }
-            if (!Registry::$instantiableWithoutConstructor[$class]) {
-                if (is_subclass_of($class, 'Serializable') && !method_exists($class, '__unserialize')) {
-                    $serializables[$k] = 'C:'.\strlen($class).':"'.$class.'":0:{}';
-                } else {
-                    $serializables[$k] = 'O:'.\strlen($class).':"'.$class.'":0:{}';
-                }
-                if (is_subclass_of($class, 'Throwable')) {
-                    $eol = is_subclass_of($class, 'Error') ? "\0Error\0" : "\0Exception\0";
-                    $serializables[$k] = substr_replace($serializables[$k], '1:{s:'.(5 + \strlen($eol)).':"'.$eol.'trace";a:0:{}}', -4);
-                }
-                continue;
-            }
-            $code .= $subIndent.(1 !== $k - $j ? $k.' => ' : '');
-            $j = $k;
-            $eol = ",\n";
-            $c = '['.self::export($class).']';
-
-            if ($seen[$class] ?? false) {
-                if (Registry::$cloneable[$class]) {
-                    ++$prototypesAccess;
-                    $code .= 'clone $p'.$c;
-                } else {
-                    ++$factoriesAccess;
-                    $code .= '$f'.$c.'()';
-                }
-            } else {
-                $seen[$class] = true;
-                if (Registry::$cloneable[$class]) {
-                    $code .= 'clone ('.($prototypesAccess++ ? '$p' : '($p = &'.$r.'::$prototypes)').$c.' ?? '.$r.'::p';
-                } else {
-                    $code .= '('.($factoriesAccess++ ? '$f' : '($f = &'.$r.'::$factories)').$c.' ?? '.$r.'::f';
-                    $eol = '()'.$eol;
-                }
-                $code .= '('.substr($c, 1, -1).'))';
-            }
-            $code .= $eol;
-        }
-
-        if (1 === $prototypesAccess) {
-            $code = str_replace('($p = &'.$r.'::$prototypes)', $r.'::$prototypes', $code);
-        }
-        if (1 === $factoriesAccess) {
-            $code = str_replace('($f = &'.$r.'::$factories)', $r.'::$factories', $code);
-        }
-        if ('' !== $code) {
-            $code = "\n".$code.$indent;
-        }
-
-        if ($serializables) {
-            $code = $r.'::unserialize(['.$code.'], '.self::export($serializables, $indent).')';
-        } else {
-            $code = '['.$code.']';
-        }
-
-        return '$o = '.$code;
-    }
-
-    private static function exportHydrator(Hydrator $value, string $indent, string $subIndent): string
-    {
         $code = '';
-        foreach ($value->properties as $class => $properties) {
-            $code .= $subIndent.'    '.self::export($class).' => '.self::export($properties, $subIndent.'    ').",\n";
+        $line = '';
+        $lineSize = 0;
+        foreach ($value as $k => $v) {
+            $part = '';
+            $partSize = 1;
+            if (!\is_int($k) || 1 !== $k - $j) {
+                $part .= self::export($k, $subIndent).' => ';
+                ++$partSize;
+            }
+            if (\is_int($k) && $k > $j) {
+                $j = $k;
+            }
+            $part .= self::export($v, $subIndent).',';
+
+            if ('' !== $line && $lineSize + $partSize > 20) {
+                $code .= $subIndent.$line."\n";
+                $line = $part;
+                $lineSize = $partSize;
+            } else {
+                $line .= '' === $line ? $part : ' '.$part;
+                $lineSize += $partSize;
+            }
+        }
+        if ('' !== $line) {
+            $code .= $subIndent.$line."\n";
         }
 
-        $code = [
-            self::export($value->registry, $subIndent),
-            self::export($value->values, $subIndent),
-            '' !== $code ? "[\n".$code.$subIndent.']' : '[]',
-            self::export($value->value, $subIndent),
-            self::export($value->wakeups, $subIndent),
-        ];
-
-        return '\\'.$value::class."::hydrate(\n".$subIndent.implode(",\n".$subIndent, $code)."\n".$indent.')';
+        return "[\n".$code.$indent.']';
     }
 
     /**

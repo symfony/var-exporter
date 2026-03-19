@@ -1,11 +1,7 @@
 <?php
 
-return \Symfony\Component\VarExporter\Internal\Hydrator::hydrate(
-    $o = \Symfony\Component\VarExporter\Internal\Registry::unserialize([], [
-        'O:20:"SomeNotExistingClass":0:{}',
-    ]),
-    null,
-    [],
-    $o[0],
-    []
-);
+return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+    'classes' => 'O:20:"SomeNotExistingClass":0:{}',
+    'objectMeta' => 1,
+    'prepared' => 0,
+])->clone();

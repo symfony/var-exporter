@@ -66,13 +66,13 @@ class Hydrator
             case 'stdClass':
                 return $baseHydrator;
 
-            case 'ErrorException':
-                return $baseHydrator->bindTo(null, new class extends \ErrorException {
-                });
-
             case 'TypeError':
-                return $baseHydrator->bindTo(null, new class extends \Error {
-                });
+                $class = 'Error';
+                break;
+
+            case 'ErrorException':
+                $class = 'Exception';
+                break;
 
             case 'SplObjectStorage':
                 return static function ($properties, $objects) {
@@ -173,13 +173,13 @@ class Hydrator
             case 'stdClass':
                 return $baseHydrator;
 
-            case 'ErrorException':
-                return $baseHydrator->bindTo(new \stdClass(), new class extends \ErrorException {
-                });
-
             case 'TypeError':
-                return $baseHydrator->bindTo(new \stdClass(), new class extends \Error {
-                });
+                $class = 'Error';
+                break;
+
+            case 'ErrorException':
+                $class = 'Exception';
+                break;
 
             case 'SplObjectStorage':
                 return static function ($properties, $object) {
