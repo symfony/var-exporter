@@ -100,7 +100,7 @@ class Exporter
                     throw new \TypeError($class.'::__serialize() must return an array');
                 }
 
-                if (self::$classInfo[$class][0] ??= method_exists($class, '__unserialize')) {
+                if (self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize')) {
                     $properties = $arrayValue;
                     goto prepare_value;
                 }
@@ -126,7 +126,7 @@ class Exporter
                 $value = new Reference($id);
                 goto handle_value;
             } else {
-                if (self::$classInfo[$class][3] ??= method_exists($class, '__sleep')) {
+                if (self::$classInfo[$class][3] ??= $reflector->hasMethod('__sleep')) {
                     if (!\is_array($sleep = $value->__sleep())) {
                         trigger_error('serialize(): __sleep should return an array only containing the names of instance-variables to serialize', \E_USER_NOTICE);
                         $value = null;
@@ -188,17 +188,17 @@ class Exporter
                     trigger_error(\sprintf('serialize(): "%s" returned as member variable from __sleep() but does not exist', $n), \E_USER_NOTICE);
                 }
             }
-            $hasUnserialize = self::$classInfo[$class][0] ??= method_exists($class, '__unserialize');
+            $hasUnserialize = self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize');
             if ($hasUnserialize) {
                 $properties = $arrayValue;
             }
 
             prepare_value:
-            $hasUnserialize ??= self::$classInfo[$class][0] ??= method_exists($class, '__unserialize');
+            $hasUnserialize ??= self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize');
             $objectsPool[$value] = [$id = \count($objectsPool)];
             $properties = self::prepare($properties, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
             ++$objectsCount;
-            $objectsPool[$value] = [$id, $class, $properties, $hasUnserialize ? -$objectsCount : ((self::$classInfo[$class][1] ??= method_exists($class, '__wakeup')) ? $objectsCount : 0)];
+            $objectsPool[$value] = [$id, $class, $properties, $hasUnserialize ? -$objectsCount : ((self::$classInfo[$class][1] ??= $reflector->hasMethod('__wakeup')) ? $objectsCount : 0)];
 
             $value = new Reference($id);
 

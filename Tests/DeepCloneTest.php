@@ -223,6 +223,31 @@ class DeepCloneTest extends TestCase
         $this->assertNotEquals($dt, $clone);
     }
 
+    public function testDateTimeImmutable()
+    {
+        $dt = new \DateTimeImmutable('2024-01-15 10:30:00', new \DateTimeZone('UTC'));
+
+        $clone = DeepCloner::deepClone($dt);
+
+        $this->assertNotSame($dt, $clone);
+        $this->assertEquals($dt, $clone);
+    }
+
+    public function testObjectContainingDateTimeImmutable()
+    {
+        $obj = new DeepCloneDateTimeContainer(
+            'test-item',
+            new \DateTimeImmutable('2024-01-15 10:30:00', new \DateTimeZone('UTC'))
+        );
+
+        $clone = DeepCloner::deepClone($obj);
+
+        $this->assertNotSame($obj, $clone);
+        $this->assertSame('test-item', $clone->name);
+        $this->assertNotSame($obj->storedAt, $clone->storedAt);
+        $this->assertEquals($obj->storedAt, $clone->storedAt);
+    }
+
     public function testSplObjectStorage()
     {
         $s = new \SplObjectStorage();
@@ -439,6 +464,15 @@ class DeepCloneTest extends TestCase
 
         $this->assertFalse((new DeepCloner(new \stdClass()))->isStaticValue());
         $this->assertFalse((new DeepCloner(['key' => new \stdClass()]))->isStaticValue());
+    }
+}
+
+class DeepCloneDateTimeContainer
+{
+    public function __construct(
+        public readonly string $name,
+        public readonly \DateTimeImmutable $storedAt,
+    ) {
     }
 }
 
