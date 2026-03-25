@@ -100,7 +100,7 @@ class Exporter
                     throw new \TypeError($class.'::__serialize() must return an array');
                 }
 
-                if (self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize')) {
+                if ($hasUnserialize = self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize')) {
                     $properties = $arrayValue;
                     goto prepare_value;
                 }
@@ -188,13 +188,11 @@ class Exporter
                     trigger_error(\sprintf('serialize(): "%s" returned as member variable from __sleep() but does not exist', $n), \E_USER_NOTICE);
                 }
             }
-            $hasUnserialize = self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize');
-            if ($hasUnserialize) {
+            if ($hasUnserialize = self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize')) {
                 $properties = $arrayValue;
             }
 
             prepare_value:
-            $hasUnserialize ??= self::$classInfo[$class][0] ??= $reflector->hasMethod('__unserialize');
             $objectsPool[$value] = [$id = \count($objectsPool)];
             $properties = self::prepare($properties, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
             ++$objectsCount;
