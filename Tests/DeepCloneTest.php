@@ -466,12 +466,6 @@ class DeepCloneTest extends TestCase
         $this->assertFalse((new DeepCloner(['key' => new \stdClass()]))->isStaticValue());
     }
 
-    /**
-     * Tests that objects with __serialize/__unserialize are correctly handled
-     * when they appear after objects without these methods in the same iteration.
-     *
-     * @see https://github.com/symfony/symfony/issues/63699
-     */
     public function testMixedSerializationClassesInSameIteration()
     {
         $obj = new DeepCloneWithMixedSerializationClasses(
