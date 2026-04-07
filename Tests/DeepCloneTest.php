@@ -465,6 +465,27 @@ class DeepCloneTest extends TestCase
         $this->assertFalse((new DeepCloner(new \stdClass()))->isStaticValue());
         $this->assertFalse((new DeepCloner(['key' => new \stdClass()]))->isStaticValue());
     }
+
+    /**
+     * Tests that objects with __serialize/__unserialize are correctly handled
+     * when they appear after objects without these methods in the same iteration.
+     *
+     * @see https://github.com/symfony/symfony/issues/63699
+     */
+    public function testMixedSerializationClassesInSameIteration()
+    {
+        $obj = new DeepCloneWithMixedSerializationClasses(
+            new DeepCloneSimpleRecord('test-value'),
+            new \DateTimeImmutable('2024-01-15 10:30:00', new \DateTimeZone('UTC'))
+        );
+
+        $clone = DeepCloner::deepClone($obj);
+
+        $this->assertNotSame($obj, $clone);
+        $this->assertSame('test-value', $clone->record->value);
+        $this->assertNotSame($obj->storedAt, $clone->storedAt);
+        $this->assertEquals($obj->storedAt, $clone->storedAt);
+    }
 }
 
 class DeepCloneDateTimeContainer
@@ -481,6 +502,23 @@ class DeepCloneReadonlyReference
     public function __construct(
         public readonly string $class,
         public readonly array $data,
+    ) {
+    }
+}
+
+class DeepCloneWithMixedSerializationClasses
+{
+    public function __construct(
+        public readonly DeepCloneSimpleRecord $record,
+        public readonly \DateTimeImmutable $storedAt,
+    ) {
+    }
+}
+
+class DeepCloneSimpleRecord
+{
+    public function __construct(
+        public readonly string $value,
     ) {
     }
 }
