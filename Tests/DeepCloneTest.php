@@ -928,6 +928,45 @@ class DeepCloneTest extends TestCase
         $this->assertSame($clone, $clone->ref->ref);
     }
 
+    // ── $allowedClasses tests ──
+
+    public function testConstructorRejectsDisallowedClass()
+    {
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('"stdClass" is not allowed');
+        new DeepCloner(new \stdClass(), []);
+    }
+
+    public function testCloneRejectsDisallowedClass()
+    {
+        $cloner = new DeepCloner(new \stdClass());
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('"stdClass" is not allowed');
+        $cloner->clone([]);
+    }
+
+    public function testClonePermitsListedClass()
+    {
+        $cloner = new DeepCloner(new \stdClass());
+        $clone = $cloner->clone(['stdClass']);
+        $this->assertInstanceOf(\stdClass::class, $clone);
+    }
+
+    public function testDeepCloneWithAllowedClasses()
+    {
+        $o = new \stdClass();
+        $o->x = 1;
+        $clone = DeepCloner::deepClone($o, ['stdClass']);
+        $this->assertSame(1, $clone->x);
+    }
+
+    public function testDeepCloneRejectsDisallowedClass()
+    {
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('"stdClass" is not allowed');
+        DeepCloner::deepClone(new \stdClass(), ['DateTime']);
+    }
+
     private static function assertPureArray(array $data, string $path = '', bool $root = true): void
     {
         foreach ($data as $key => $value) {

@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => '',
     'objectMeta' => 0,
     'prepared' => [-1],
@@ -11,4 +11,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
     'refMasks' => [
         1 => [false],
     ],
-])->clone();
+]);

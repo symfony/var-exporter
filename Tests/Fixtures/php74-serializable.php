@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => ['Symfony\\Component\\VarExporter\\Tests\\Fixtures\\Php74Serializable', 'stdClass'],
     'objectMeta' => [
         [0, -2],
@@ -14,4 +14,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             [true],
         ],
     ],
-])->clone();
+]);

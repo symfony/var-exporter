@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => ['DateTime', 'DateTimeImmutable', 'DateTimeZone', 'DateInterval', 'DatePeriod'],
     'objectMeta' => [
         [0, -1],
@@ -44,4 +44,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             ['start' => true, 'interval' => true],
         ],
     ],
-])->clone();
+]);

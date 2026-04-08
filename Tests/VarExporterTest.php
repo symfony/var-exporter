@@ -83,7 +83,6 @@ class VarExporterTest extends TestCase
 
     public static function provideFailingSerialization()
     {
-        yield [hash_init('md5')];
         yield [new \ReflectionClass(\stdClass::class)];
         yield [(new \ReflectionFunction(static function (): int {}))->getReturnType()];
         yield [new \ReflectionGenerator((static function () { yield 123; })())];

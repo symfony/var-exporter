@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => ['SplObjectStorage', 'stdClass'],
     'objectMeta' => [
         [0, -2],
@@ -19,4 +19,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             ],
         ],
     ],
-])->clone();
+]);

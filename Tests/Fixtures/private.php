@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => ['Symfony\\Component\\VarExporter\\Tests\\MyPrivateValue', 'Symfony\\Component\\VarExporter\\Tests\\MyPrivateChildValue'],
     'objectMeta' => [0, 1],
     'prepared' => [0, 1],
@@ -11,4 +11,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             'priv' => [234, 234],
         ],
     ],
-])->clone();
+]);

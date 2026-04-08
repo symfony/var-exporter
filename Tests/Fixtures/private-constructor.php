@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => 'Symfony\\Component\\VarExporter\\Tests\\PrivateConstructor',
     'objectMeta' => 1,
     'prepared' => 0,
@@ -9,4 +9,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             'prop' => ['bar'],
         ],
     ],
-])->clone();
+]);

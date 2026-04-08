@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => 'Symfony\\Component\\VarExporter\\Tests\\Fixtures\\GoodNight',
     'objectMeta' => 1,
     'prepared' => 0,
@@ -13,4 +13,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             'bar' => ['morning'],
         ],
     ],
-])->clone();
+]);

@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => 'ArrayIterator',
     'objectMeta' => [
         [0, -1],
@@ -17,4 +17,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             ],
         ],
     ],
-])->clone();
+]);

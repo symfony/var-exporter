@@ -1,6 +1,6 @@
 <?php
 
-return \Symfony\Component\VarExporter\DeepCloner::fromArray([
+return \deepclone_from_array([
     'classes' => 'Symfony\\Component\\VarExporter\\Tests\\__SerializeButNo__Unserialize',
     'objectMeta' => 1,
     'prepared' => 0,
@@ -15,4 +15,4 @@ return \Symfony\Component\VarExporter\DeepCloner::fromArray([
             'bar' => ['ddd'],
         ],
     ],
-])->clone();
+]);
