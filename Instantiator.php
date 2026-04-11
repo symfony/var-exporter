@@ -11,9 +11,9 @@
 
 namespace Symfony\Component\VarExporter;
 
+use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 use Symfony\Component\VarExporter\Exception\ExceptionInterface;
 use Symfony\Component\VarExporter\Exception\NotInstantiableTypeException;
-use Symfony\Component\VarExporter\Internal\Registry;
 
 /**
  * A utility class to create objects without calling their constructor.
@@ -29,35 +29,23 @@ final class Instantiator
      *
      * @template T of object
      *
-     * @param class-string<T>                           $class            The class of the instance to create
-     * @param array<string, mixed>                      $properties       The properties to set on the instance
-     * @param array<class-string, array<string, mixed>> $scopedProperties The properties to set on the instance,
-     *                                                                    keyed by their declaring class
+     * @param class-string<T>                           $class       The class of the instance to create
+     * @param array<string, mixed>                      $mangledVars The properties to set on the instance
+     * @param array<class-string, array<string, mixed>> $scopedVars  The properties to set on the instance,
+     *                                                               keyed by their declaring class
      *
      * @return T
      *
      * @throws ExceptionInterface When the instance cannot be created
      */
-    public static function instantiate(string $class, array $properties = [], array $scopedProperties = []): object
+    public static function instantiate(string $class, array $mangledVars = [], array $scopedVars = []): object
     {
-        if (!\array_key_exists($class, Registry::$cloneable)) {
-            Registry::getClassReflector($class);
+        try {
+            return deepclone_hydrate($class, $scopedVars, $mangledVars);
+        } catch (\DeepClone\ClassNotFoundException $e) {
+            throw new ClassNotFoundException($e);
+        } catch (\DeepClone\NotInstantiableException $e) {
+            throw new NotInstantiableTypeException($e);
         }
-
-        $reflector = Registry::$reflectors[$class] ??= Registry::getClassReflector($class, Registry::$instantiableWithoutConstructor[$class], Registry::$cloneable[$class]);
-
-        if (Registry::$cloneable[$class]) {
-            $instance = clone Registry::$prototypes[$class];
-        } elseif (Registry::$instantiableWithoutConstructor[$class]) {
-            $instance = $reflector->newInstanceWithoutConstructor();
-        } elseif (null === Registry::$prototypes[$class]) {
-            throw new NotInstantiableTypeException($class);
-        } elseif ($reflector->implementsInterface('Serializable') && !method_exists($class, '__unserialize')) {
-            $instance = unserialize('C:'.\strlen($class).':"'.$class.'":0:{}');
-        } else {
-            $instance = unserialize('O:'.\strlen($class).':"'.$class.'":0:{}');
-        }
-
-        return $properties || $scopedProperties ? Hydrator::hydrate($instance, $properties, $scopedProperties) : $instance;
     }
 }

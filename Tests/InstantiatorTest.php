@@ -30,7 +30,7 @@ class InstantiatorTest extends TestCase
     public function testFailingInstantiation(string $class)
     {
         $this->expectException(NotInstantiableTypeException::class);
-        $this->expectExceptionMessageMatches('/Type ".*" is not instantiable\./');
+        $this->expectExceptionMessageMatches('/".*" is not instantiable\./');
         Instantiator::instantiate($class);
     }
 

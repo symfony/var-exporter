@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\VarExporter;
 
-use Symfony\Component\VarExporter\Internal\Hydrator as InternalHydrator;
-
 /**
  * Utility class to hydrate the properties of an object.
  *
@@ -47,32 +45,15 @@ final class Hydrator
      *
      * @template T of object
      *
-     * @param T                                         $instance         The object to hydrate
-     * @param array<string, mixed>                      $properties       The properties to set on the instance
-     * @param array<class-string, array<string, mixed>> $scopedProperties The properties to set on the instance,
-     *                                                                    keyed by their declaring class
+     * @param T                                         $instance    The object to hydrate
+     * @param array<string, mixed>                      $mangledVars The properties to set on the instance
+     * @param array<class-string, array<string, mixed>> $scopedVars  The properties to set on the instance,
+     *                                                               keyed by their declaring class
      *
      * @return T
      */
-    public static function hydrate(object $instance, array $properties = [], array $scopedProperties = []): object
+    public static function hydrate(object $instance, array $mangledVars = [], array $scopedVars = []): object
     {
-        if ($properties) {
-            $class = $instance::class;
-            $propertyScopes = InternalHydrator::$propertyScopes[$class] ??= InternalHydrator::getPropertyScopes($class);
-
-            foreach ($properties as $name => &$value) {
-                [$scope, $name, $writeScope] = $propertyScopes[$name] ?? [$class, $name, $class];
-                $scopedProperties[$writeScope ?? $scope][$name] = &$value;
-            }
-            unset($value);
-        }
-
-        foreach ($scopedProperties as $scope => $properties) {
-            if ($properties) {
-                (InternalHydrator::$simpleHydrators[$scope] ??= InternalHydrator::getSimpleHydrator($scope))($properties, $instance);
-            }
-        }
-
-        return $instance;
+        return deepclone_hydrate($instance, $scopedVars, $mangledVars);
     }
 }
