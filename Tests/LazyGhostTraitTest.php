@@ -58,7 +58,7 @@ class LazyGhostTraitTest extends TestCase
 {
     public function testGetPublic()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -69,7 +69,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testGetPrivate()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -80,7 +80,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testIssetPublic()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -91,7 +91,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testUnsetPublic()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -105,7 +105,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testSetPublic()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -117,7 +117,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testSetPrivate()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -129,7 +129,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testClone()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -145,7 +145,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testSerialize()
     {
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) {
             $ghost->__construct();
         });
 
@@ -193,14 +193,14 @@ class LazyGhostTraitTest extends TestCase
     {
         yield [new MagicClass()];
 
-        yield [ChildMagicClass::createLazyGhost(function (ChildMagicClass $instance) {
+        yield [ChildMagicClass::createLazyGhost(static function (ChildMagicClass $instance) {
             $instance->__construct();
         })];
     }
 
     public function testResetLazyGhost()
     {
-        $instance = ChildMagicClass::createLazyGhost(function (ChildMagicClass $instance) {
+        $instance = ChildMagicClass::createLazyGhost(static function (ChildMagicClass $instance) {
             $instance->__construct();
         });
 
@@ -213,7 +213,7 @@ class LazyGhostTraitTest extends TestCase
     public function testFullInitialization()
     {
         $counter = 0;
-        $instance = ChildTestClass::createLazyGhost(function (ChildTestClass $ghost) use (&$counter) {
+        $instance = ChildTestClass::createLazyGhost(static function (ChildTestClass $ghost) use (&$counter) {
             ++$counter;
             $ghost->__construct();
         });
@@ -263,7 +263,7 @@ class LazyGhostTraitTest extends TestCase
 
                 return 6 === $default ? 678 : -1;
             },
-            'dummyProperty' => fn () => 123,
+            'dummyProperty' => static fn () => 123,
         ]);
 
         $this->assertSame(["\0".TestClass::class."\0lazyObjectState"], array_keys((array) $instance));
@@ -326,14 +326,14 @@ class LazyGhostTraitTest extends TestCase
      */
     public function testPartialInitializationWithNastyPassByRef()
     {
-        $instance = ChildTestClass::createLazyGhost(['public' => fn (ChildTestClass $instance, string &$property, ?string &$scope, mixed $default) => $property = $scope = 123]);
+        $instance = ChildTestClass::createLazyGhost(['public' => static fn (ChildTestClass $instance, string &$property, ?string &$scope, mixed $default) => $property = $scope = 123]);
 
         $this->assertSame(123, $instance->public);
     }
 
     public function testSetStdClassProperty()
     {
-        $instance = ChildStdClass::createLazyGhost(function (ChildStdClass $ghost) {
+        $instance = ChildStdClass::createLazyGhost(static function (ChildStdClass $ghost) {
         });
 
         $instance->public = 12;
@@ -342,14 +342,14 @@ class LazyGhostTraitTest extends TestCase
 
     public function testLazyClass()
     {
-        $obj = new LazyClass(fn ($proxy) => $proxy->public = 123);
+        $obj = new LazyClass(static fn ($proxy) => $proxy->public = 123);
 
         $this->assertSame(123, $obj->public);
     }
 
     public function testReflectionPropertyGetValue()
     {
-        $obj = TestClass::createLazyGhost(fn ($proxy) => $proxy->__construct());
+        $obj = TestClass::createLazyGhost(static fn ($proxy) => $proxy->__construct());
 
         $r = new \ReflectionProperty($obj, 'private');
 
@@ -453,7 +453,7 @@ class LazyGhostTraitTest extends TestCase
         $obj = new class {
             public array $foo;
         };
-        $proxy = $this->createLazyGhost($obj::class, fn () => null);
+        $proxy = $this->createLazyGhost($obj::class, static fn () => null);
 
         $proxy->foo[] = 123;
 
@@ -465,7 +465,7 @@ class LazyGhostTraitTest extends TestCase
      */
     public function testReadOnlyClass()
     {
-        $proxy = $this->createLazyGhost(ReadOnlyClass::class, fn ($proxy) => $proxy->__construct(123));
+        $proxy = $this->createLazyGhost(ReadOnlyClass::class, static fn ($proxy) => $proxy->__construct(123));
 
         $this->assertSame(123, $proxy->foo);
     }
@@ -483,7 +483,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testAccessingUninializedPropertyWithLazyGhost()
     {
-        $object = $this->createLazyGhost(ClassWithUninitializedObjectProperty::class, function ($instance) {});
+        $object = $this->createLazyGhost(ClassWithUninitializedObjectProperty::class, static function ($instance) {});
 
         $this->expectException(\Error::class);
         $this->expectExceptionCode(0);
@@ -494,7 +494,7 @@ class LazyGhostTraitTest extends TestCase
 
     public function testNormalization()
     {
-        $object = $this->createLazyGhost(SimpleObject::class, function ($instance) {});
+        $object = $this->createLazyGhost(SimpleObject::class, static function ($instance) {});
 
         $loader = new AttributeLoader();
         $metadataFactory = new ClassMetadataFactory($loader);
@@ -511,7 +511,7 @@ class LazyGhostTraitTest extends TestCase
     public function testPropertyHooks()
     {
         $initialized = false;
-        $object = $this->createLazyGhost(Hooked::class, function ($instance) use (&$initialized) {
+        $object = $this->createLazyGhost(Hooked::class, static function ($instance) use (&$initialized) {
             $initialized = true;
         });
 
@@ -521,7 +521,7 @@ class LazyGhostTraitTest extends TestCase
         $this->assertTrue($initialized);
 
         $initialized = false;
-        $object = $this->createLazyGhost(Hooked::class, function ($instance) use (&$initialized) {
+        $object = $this->createLazyGhost(Hooked::class, static function ($instance) use (&$initialized) {
             $initialized = true;
         });
 
@@ -536,7 +536,7 @@ class LazyGhostTraitTest extends TestCase
     public function testPropertyHooksWithDefaultValue()
     {
         $initialized = false;
-        $object = $this->createLazyGhost(HookedWithDefaultValue::class, function ($instance) use (&$initialized) {
+        $object = $this->createLazyGhost(HookedWithDefaultValue::class, static function ($instance) use (&$initialized) {
             $initialized = true;
         });
 
@@ -546,7 +546,7 @@ class LazyGhostTraitTest extends TestCase
         $this->assertTrue($initialized);
 
         $initialized = false;
-        $object = $this->createLazyGhost(HookedWithDefaultValue::class, function ($instance) use (&$initialized) {
+        $object = $this->createLazyGhost(HookedWithDefaultValue::class, static function ($instance) use (&$initialized) {
             $initialized = true;
         });
         $object->backedIntWithDefault = 654;
@@ -563,14 +563,14 @@ class LazyGhostTraitTest extends TestCase
      */
     public function testAsymmetricVisibility()
     {
-        $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) {
+        $object = $this->createLazyGhost(AsymmetricVisibility::class, static function ($instance) {
             $instance->__construct(123, 234);
         });
 
         $this->assertSame(123, $object->foo);
         $this->assertSame(234, $object->getBar());
 
-        $object = $this->createLazyGhost(AsymmetricVisibility::class, function ($instance) {
+        $object = $this->createLazyGhost(AsymmetricVisibility::class, static function ($instance) {
             $instance->__construct(123, 234);
         });
 
