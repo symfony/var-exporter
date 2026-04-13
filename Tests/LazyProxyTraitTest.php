@@ -58,7 +58,7 @@ class LazyProxyTraitTest extends TestCase
     public function testGetter()
     {
         $initCounter = 0;
-        $proxy = $this->createLazyProxy(TestClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestClass((object) ['hello' => 'world']);
@@ -83,7 +83,7 @@ class LazyProxyTraitTest extends TestCase
     public function testInitialize()
     {
         $initCounter = 0;
-        $proxy = $this->createLazyProxy(TestClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestClass((object) ['hello' => 'world']);
@@ -103,7 +103,7 @@ class LazyProxyTraitTest extends TestCase
     public function testClone()
     {
         $initCounter = 0;
-        $proxy = $this->createLazyProxy(TestClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestClass((object) ['hello' => 'world']);
@@ -124,7 +124,7 @@ class LazyProxyTraitTest extends TestCase
     public function testUnserialize()
     {
         $initCounter = 0;
-        $proxy = $this->createLazyProxy(TestUnserializeClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestUnserializeClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestUnserializeClass((object) ['hello' => 'world']);
@@ -146,7 +146,7 @@ class LazyProxyTraitTest extends TestCase
     public function testWakeup()
     {
         $initCounter = 0;
-        $proxy = $this->createLazyProxy(TestWakeupClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestWakeupClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestWakeupClass((object) ['hello' => 'world']);
@@ -166,7 +166,7 @@ class LazyProxyTraitTest extends TestCase
     public function testDestruct()
     {
         $initCounter = 0;
-        $proxy = $this->createLazyProxy(TestClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestClass((object) ['hello' => 'world']);
@@ -175,7 +175,7 @@ class LazyProxyTraitTest extends TestCase
         unset($proxy);
         $this->assertSame(0, $initCounter);
 
-        $proxy = $this->createLazyProxy(TestClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestClass((object) ['hello' => 'world']);
@@ -189,7 +189,7 @@ class LazyProxyTraitTest extends TestCase
     public function testDynamicProperty()
     {
         $initCounter = 0;
-        $proxy = $this->createLazyProxy(TestClass::class, function () use (&$initCounter) {
+        $proxy = $this->createLazyProxy(TestClass::class, static function () use (&$initCounter) {
             ++$initCounter;
 
             return new TestClass((object) ['hello' => 'world']);
@@ -207,7 +207,7 @@ class LazyProxyTraitTest extends TestCase
 
     public function testStringMagicGet()
     {
-        $proxy = $this->createLazyProxy(StringMagicGetClass::class, fn () => new StringMagicGetClass());
+        $proxy = $this->createLazyProxy(StringMagicGetClass::class, static fn () => new StringMagicGetClass());
 
         $this->assertSame('abc', $proxy->abc);
     }
@@ -215,13 +215,13 @@ class LazyProxyTraitTest extends TestCase
     public function testFinalPublicClass()
     {
         $this->expectException(LogicException::class, 'Cannot generate lazy proxy: method "Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\FinalPublicClass::increment()" is final.');
-        $this->createLazyProxy(FinalPublicClass::class, fn () => new FinalPublicClass());
+        $this->createLazyProxy(FinalPublicClass::class, static fn () => new FinalPublicClass());
     }
 
     public function testOverwritePropClass()
     {
         $this->expectException(LogicException::class, 'Cannot generate lazy proxy: method "Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\FinalPublicClass::increment()" is final.');
-        $this->createLazyProxy(TestOverwritePropClass::class, fn () => new TestOverwritePropClass('123', 5));
+        $this->createLazyProxy(TestOverwritePropClass::class, static fn () => new TestOverwritePropClass('123', 5));
     }
 
     public function testWither()
@@ -237,7 +237,7 @@ class LazyProxyTraitTest extends TestCase
                 return $clone;
             }
         };
-        $proxy = $this->createLazyProxy($obj::class, fn () => $obj);
+        $proxy = $this->createLazyProxy($obj::class, static fn () => $obj);
 
         $clone = $proxy->withFoo(234);
         $this->assertSame($clone::class, $proxy::class);
@@ -257,7 +257,7 @@ class LazyProxyTraitTest extends TestCase
                 return $this;
             }
         };
-        $proxy = $this->createLazyProxy($obj::class, fn () => $obj);
+        $proxy = $this->createLazyProxy($obj::class, static fn () => $obj);
 
         $this->assertSame($proxy->setFoo(234), $proxy);
         $this->assertSame(234, $proxy->foo);
@@ -268,7 +268,7 @@ class LazyProxyTraitTest extends TestCase
         $obj = new class extends \stdClass {
             public array $foo;
         };
-        $proxy = $this->createLazyProxy($obj::class, fn () => $obj);
+        $proxy = $this->createLazyProxy($obj::class, static fn () => $obj);
 
         $proxy->foo[] = 123;
 
@@ -282,14 +282,14 @@ class LazyProxyTraitTest extends TestCase
             $this->expectExceptionMessage('Cannot generate lazy proxy with PHP < 8.3: class "Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\ReadOnlyClass" is readonly.');
         }
 
-        $proxy = $this->createLazyProxy(ReadOnlyClass::class, fn () => new ConcreteReadOnlyClass(123));
+        $proxy = $this->createLazyProxy(ReadOnlyClass::class, static fn () => new ConcreteReadOnlyClass(123));
 
         $this->assertSame(123, $proxy->foo);
     }
 
     public function testNormalization()
     {
-        $object = $this->createLazyProxy(SimpleObject::class, fn () => new SimpleObject());
+        $object = $this->createLazyProxy(SimpleObject::class, static fn () => new SimpleObject());
 
         $loader = new AttributeLoader();
         $metadataFactory = new ClassMetadataFactory($loader);
@@ -302,11 +302,11 @@ class LazyProxyTraitTest extends TestCase
 
     public function testReinitRegularLazyProxy()
     {
-        $object = $this->createLazyProxy(RegularClass::class, fn () => new RegularClass(123));
+        $object = $this->createLazyProxy(RegularClass::class, static fn () => new RegularClass(123));
 
         $this->assertSame(123, $object->foo);
 
-        $object::createLazyProxy(fn () => new RegularClass(234), $object);
+        $object::createLazyProxy(static fn () => new RegularClass(234), $object);
 
         $this->assertSame(234, $object->foo);
     }
@@ -314,11 +314,11 @@ class LazyProxyTraitTest extends TestCase
     #[RequiresPhp('>=8.3')]
     public function testReinitReadonlyLazyProxy()
     {
-        $object = $this->createLazyProxy(ReadOnlyClass::class, fn () => new ConcreteReadOnlyClass(123));
+        $object = $this->createLazyProxy(ReadOnlyClass::class, static fn () => new ConcreteReadOnlyClass(123));
 
         $this->assertSame(123, $object->foo);
 
-        $object::createLazyProxy(fn () => new ConcreteReadOnlyClass(234), $object);
+        $object::createLazyProxy(static fn () => new ConcreteReadOnlyClass(234), $object);
 
         $this->assertSame(234, $object->foo);
     }
@@ -327,7 +327,7 @@ class LazyProxyTraitTest extends TestCase
     public function testConcretePropertyHooks()
     {
         $initialized = false;
-        $object = $this->createLazyProxy(Hooked::class, function () use (&$initialized) {
+        $object = $this->createLazyProxy(Hooked::class, static function () use (&$initialized) {
             $initialized = true;
 
             return new Hooked();
@@ -339,7 +339,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertTrue($initialized);
 
         $initialized = false;
-        $object = $this->createLazyProxy(Hooked::class, function () use (&$initialized) {
+        $object = $this->createLazyProxy(Hooked::class, static function () use (&$initialized) {
             $initialized = true;
 
             return new Hooked();
@@ -354,7 +354,7 @@ class LazyProxyTraitTest extends TestCase
     public function testAbstractPropertyHooks()
     {
         $initialized = false;
-        $object = $this->createLazyProxy(AbstractHooked::class, function () use (&$initialized) {
+        $object = $this->createLazyProxy(AbstractHooked::class, static function () use (&$initialized) {
             $initialized = true;
 
             return new class extends AbstractHooked {
@@ -368,7 +368,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertTrue($initialized);
 
         $initialized = false;
-        $object = $this->createLazyProxy(AbstractHooked::class, function () use (&$initialized) {
+        $object = $this->createLazyProxy(AbstractHooked::class, static function () use (&$initialized) {
             $initialized = true;
 
             return new class extends AbstractHooked {
@@ -385,14 +385,14 @@ class LazyProxyTraitTest extends TestCase
     #[RequiresPhp('>=8.4')]
     public function testAsymmetricVisibility()
     {
-        $object = $this->createLazyProxy(AsymmetricVisibility::class, function () {
+        $object = $this->createLazyProxy(AsymmetricVisibility::class, static function () {
             return new AsymmetricVisibility(123, 234);
         });
 
         $this->assertSame(123, $object->foo);
         $this->assertSame(234, $object->getBar());
 
-        $object = $this->createLazyProxy(AsymmetricVisibility::class, function () {
+        $object = $this->createLazyProxy(AsymmetricVisibility::class, static function () {
             return new AsymmetricVisibility(123, 234);
         });
 
@@ -404,7 +404,7 @@ class LazyProxyTraitTest extends TestCase
     {
         $now = new \DateTimeImmutable();
         $initialized = false;
-        $object = $this->createLazyProxy(\DateTimeImmutable::class, function () use ($now, &$initialized) {
+        $object = $this->createLazyProxy(\DateTimeImmutable::class, static function () use ($now, &$initialized) {
             $initialized = true;
 
             return $now;

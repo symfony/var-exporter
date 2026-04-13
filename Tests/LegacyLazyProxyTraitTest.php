@@ -33,7 +33,7 @@ class LegacyLazyProxyTraitTest extends LazyProxyTraitTest
 
             public function __construct()
             {
-                self::createLazyProxy(fn () => new TestClass((object) ['foo' => 123]), $this);
+                self::createLazyProxy(static fn () => new TestClass((object) ['foo' => 123]), $this);
             }
         };
 
@@ -42,7 +42,7 @@ class LegacyLazyProxyTraitTest extends LazyProxyTraitTest
 
     public function testFinalPublicClass()
     {
-        $proxy = $this->createLazyProxy(FinalPublicClass::class, fn () => new FinalPublicClass());
+        $proxy = $this->createLazyProxy(FinalPublicClass::class, static fn () => new FinalPublicClass());
 
         $this->assertSame(1, $proxy->increment());
         $this->assertSame(2, $proxy->increment());
@@ -51,7 +51,7 @@ class LegacyLazyProxyTraitTest extends LazyProxyTraitTest
 
     public function testOverwritePropClass()
     {
-        $proxy = $this->createLazyProxy(TestOverwritePropClass::class, fn () => new TestOverwritePropClass('123', 5));
+        $proxy = $this->createLazyProxy(TestOverwritePropClass::class, static fn () => new TestOverwritePropClass('123', 5));
 
         $this->assertSame('123', $proxy->getDep());
         $this->assertSame(1, $proxy->increment());
