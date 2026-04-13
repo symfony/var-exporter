@@ -275,7 +275,7 @@ class LazyProxyTraitTest extends TestCase
 
     public function testReadOnlyClass()
     {
-        $proxy = $this->createLazyProxy(ReadOnlyClass::class, fn () => new ConcreteReadOnlyClass(123));
+        $proxy = $this->createLazyProxy(ReadOnlyClass::class, static fn () => new ConcreteReadOnlyClass(123));
 
         $this->assertSame(123, $proxy->foo);
     }
