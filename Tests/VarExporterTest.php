@@ -24,6 +24,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\GoodNight;
 use Symfony\Component\VarExporter\Tests\Fixtures\MySerializable;
 use Symfony\Component\VarExporter\Tests\Fixtures\MyWakeup;
 use Symfony\Component\VarExporter\Tests\Fixtures\Php74Serializable;
+use Symfony\Component\VarExporter\Tests\Fixtures\SleepUninitialized;
 use Symfony\Component\VarExporter\VarExporter;
 
 $errorHandler = set_error_handler(static function (int $errno, string $errstr) use (&$errorHandler) {
@@ -263,6 +264,24 @@ class VarExporterTest extends TestCase
     public function testUnicodeDirectionality()
     {
         $this->assertSame('"\0\r\u{202A}\u{202B}\u{202D}\u{202E}\u{2066}\u{2067}\u{2068}\u{202C}\u{2069}\n"', VarExporter::export("\0\r\u{202A}\u{202B}\u{202D}\u{202E}\u{2066}\u{2067}\u{2068}\u{202C}\u{2069}\n"));
+    }
+
+    public function testSleepListingUninitializedTypedPropertyEmitsNoNotice()
+    {
+        $errors = [];
+        $previous = set_error_handler(static function (int $errno, string $errstr) use (&$errors) {
+            $errors[] = $errstr;
+
+            return true;
+        });
+
+        try {
+            VarExporter::export(new SleepUninitialized('hello'));
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame([], $errors);
     }
 }
 
