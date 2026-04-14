@@ -165,6 +165,9 @@ class Exporter
             }
             if ($sleep) {
                 foreach ($sleep as $n => $v) {
+                    if (\is_string($n) && $reflector->hasProperty($n)) {
+                        continue;
+                    }
                     trigger_error(\sprintf('serialize(): "%s" returned as member variable from __sleep() but does not exist', $n), \E_USER_NOTICE);
                 }
             }
