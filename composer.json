@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": ">=8.4.1",
-        "symfony/polyfill-deepclone": "^1.35"
+        "symfony/polyfill-deepclone": "^1.36"
     },
     "require-dev": {
         "symfony/property-access": "^7.4|^8.0",

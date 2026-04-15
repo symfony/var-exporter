@@ -17,17 +17,27 @@ use Symfony\Component\VarExporter\Instantiator;
 
 class HydratorTest extends TestCase
 {
-    public function testHydrateInitializedReadonlyProperty()
+    public function testHydrateInitializedReadonlyPropertySameValueIsIdempotent()
     {
         $object = new HydratorTestClass(123);
 
         Hydrator::hydrate($object, [
-            'value' => 456,
+            'value' => 123,
             'status' => 'hydrated',
         ]);
 
         $this->assertSame(123, $object->getValue());
         $this->assertSame('hydrated', $object->status);
+    }
+
+    public function testHydrateInitializedReadonlyPropertyDifferentValueThrows()
+    {
+        $object = new HydratorTestClass(123);
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Cannot modify readonly property');
+
+        Hydrator::hydrate($object, ['value' => 456]);
     }
 
     public function testHydrateUninitializedReadonlyProperty()

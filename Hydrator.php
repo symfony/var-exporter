@@ -54,6 +54,13 @@ final class Hydrator
      */
     public static function hydrate(object $instance, array $mangledVars = [], array $scopedVars = []): object
     {
-        return deepclone_hydrate($instance, $scopedVars, $mangledVars);
+        if ($mangledVars) {
+            deepclone_hydrate($instance, $mangledVars, \DEEPCLONE_HYDRATE_MANGLED_VARS);
+        }
+        if ($scopedVars) {
+            deepclone_hydrate($instance, $scopedVars);
+        }
+
+        return $instance;
     }
 }

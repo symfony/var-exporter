@@ -41,7 +41,15 @@ final class Instantiator
     public static function instantiate(string $class, array $mangledVars = [], array $scopedVars = []): object
     {
         try {
-            return deepclone_hydrate($class, $scopedVars, $mangledVars);
+            $instance = $mangledVars
+                ? deepclone_hydrate($class, $mangledVars, \DEEPCLONE_HYDRATE_MANGLED_VARS)
+                : deepclone_hydrate($class, $scopedVars);
+
+            if ($mangledVars && $scopedVars) {
+                deepclone_hydrate($instance, $scopedVars);
+            }
+
+            return $instance;
         } catch (\DeepClone\ClassNotFoundException $e) {
             throw new ClassNotFoundException($e);
         } catch (\DeepClone\NotInstantiableException $e) {
