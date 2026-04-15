@@ -42,11 +42,11 @@ final class Instantiator
     {
         try {
             $instance = $mangledVars
-                ? deepclone_hydrate($class, $mangledVars, \DEEPCLONE_HYDRATE_MANGLED_VARS)
-                : deepclone_hydrate($class, $scopedVars);
+                ? deepclone_hydrate($class, $mangledVars, \DEEPCLONE_HYDRATE_MANGLED_VARS | \DEEPCLONE_HYDRATE_PRESERVE_REFS)
+                : deepclone_hydrate($class, $scopedVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
 
             if ($mangledVars && $scopedVars) {
-                deepclone_hydrate($instance, $scopedVars);
+                deepclone_hydrate($instance, $scopedVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
             }
 
             return $instance;
