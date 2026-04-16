@@ -52,7 +52,7 @@ try {
     restore_error_handler();
 }
 
-#[RequiresPhp('>=8.4')]
+#[RequiresPhp('>=8.4.0')]
 class LazyProxyTraitTest extends TestCase
 {
     public function testGetter()
@@ -311,7 +311,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(234, $object->foo);
     }
 
-    #[RequiresPhp('>=8.3')]
+    #[RequiresPhp('>=8.3.0')]
     public function testReinitReadonlyLazyProxy()
     {
         $object = $this->createLazyProxy(ReadOnlyClass::class, static fn () => new ConcreteReadOnlyClass(123));
@@ -323,7 +323,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(234, $object->foo);
     }
 
-    #[RequiresPhp('>=8.4')]
+    #[RequiresPhp('>=8.4.0')]
     public function testConcretePropertyHooks()
     {
         $initialized = false;
@@ -350,7 +350,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertSame(345, $object->backed);
     }
 
-    #[RequiresPhp('>=8.4')]
+    #[RequiresPhp('>=8.4.0')]
     public function testAbstractPropertyHooks()
     {
         $initialized = false;
@@ -382,7 +382,7 @@ class LazyProxyTraitTest extends TestCase
         $this->assertTrue($initialized);
     }
 
-    #[RequiresPhp('>=8.4')]
+    #[RequiresPhp('>=8.4.0')]
     public function testAsymmetricVisibility()
     {
         $object = $this->createLazyProxy(AsymmetricVisibility::class, static fn () => new AsymmetricVisibility(123, 234));

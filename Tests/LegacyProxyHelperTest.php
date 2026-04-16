@@ -21,7 +21,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\StringMagicGetClass;
 
 #[IgnoreDeprecations]
 #[Group('legacy')]
-#[RequiresPhp('<8.4')]
+#[RequiresPhp('<8.4.0')]
 class LegacyProxyHelperTest extends ProxyHelperTest
 {
     public function testGenerateLazyProxy()

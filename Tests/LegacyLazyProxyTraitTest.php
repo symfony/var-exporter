@@ -21,7 +21,7 @@ use Symfony\Component\VarExporter\Tests\Fixtures\LazyProxy\TestOverwritePropClas
 
 #[IgnoreDeprecations]
 #[Group('legacy')]
-#[RequiresPhp('<8.4')]
+#[RequiresPhp('<8.4.0')]
 class LegacyLazyProxyTraitTest extends LazyProxyTraitTest
 {
     public function testLazyDecoratorClass()
