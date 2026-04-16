@@ -40,16 +40,18 @@ final class Instantiator
      */
     public static function instantiate(string $class, array $mangledVars = [], array $scopedVars = []): object
     {
-        try {
-            $instance = $mangledVars
-                ? deepclone_hydrate($class, $mangledVars, \DEEPCLONE_HYDRATE_MANGLED_VARS | \DEEPCLONE_HYDRATE_PRESERVE_REFS)
-                : deepclone_hydrate($class, $scopedVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
-
-            if ($mangledVars && $scopedVars) {
-                deepclone_hydrate($instance, $scopedVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
+        if ($scopedVars) {
+            foreach ($scopedVars as $scope => $props) {
+                $isOwnScope = $scope === $class || 'stdClass' === $scope;
+                foreach ($props as $name => &$value) {
+                    $mangledVars[$isOwnScope ? $name : "\0$scope\0$name"] = &$value;
+                }
             }
+            unset($value);
+        }
 
-            return $instance;
+        try {
+            return deepclone_hydrate($class, $mangledVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
         } catch (\DeepClone\ClassNotFoundException $e) {
             throw new ClassNotFoundException($e);
         } catch (\DeepClone\NotInstantiableException $e) {

@@ -54,11 +54,19 @@ final class Hydrator
      */
     public static function hydrate(object $instance, array $mangledVars = [], array $scopedVars = []): object
     {
-        if ($mangledVars) {
-            deepclone_hydrate($instance, $mangledVars, \DEEPCLONE_HYDRATE_MANGLED_VARS | \DEEPCLONE_HYDRATE_PRESERVE_REFS);
-        }
         if ($scopedVars) {
-            deepclone_hydrate($instance, $scopedVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
+            $class = $instance::class;
+            foreach ($scopedVars as $scope => $props) {
+                $isOwnScope = $scope === $class || 'stdClass' === $scope;
+                foreach ($props as $name => &$value) {
+                    $mangledVars[$isOwnScope ? $name : "\0$scope\0$name"] = &$value;
+                }
+            }
+            unset($value);
+        }
+
+        if ($mangledVars) {
+            deepclone_hydrate($instance, $mangledVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
         }
 
         return $instance;
