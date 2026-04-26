@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `DeepCloner` to deep-clone PHP values while preserving copy-on-write benefits
+ * Deprecate `Hydrator` and `Instantiator` classes, use `deepclone_hydrate()` from the deepclone extension instead
 
 8.0
 ---

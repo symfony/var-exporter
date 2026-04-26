@@ -15,10 +15,14 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 use Symfony\Component\VarExporter\Exception\ExceptionInterface;
 use Symfony\Component\VarExporter\Exception\NotInstantiableTypeException;
 
+trigger_deprecation('symfony/var-exporter', '8.1', 'The "%s" class is deprecated, use "deepclone_hydrate()" from the deepclone extension instead.', Instantiator::class);
+
 /**
  * A utility class to create objects without calling their constructor.
  *
  * @author Nicolas Grekas <p@tchwork.com>
+ *
+ * @deprecated since Symfony 8.1, use deepclone_hydrate() from the deepclone extension instead
  */
 final class Instantiator
 {

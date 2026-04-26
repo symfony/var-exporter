@@ -11,10 +11,14 @@
 
 namespace Symfony\Component\VarExporter;
 
+trigger_deprecation('symfony/var-exporter', '8.1', 'The "%s" class is deprecated, use "deepclone_hydrate()" from the deepclone extension instead.', Hydrator::class);
+
 /**
  * Utility class to hydrate the properties of an object.
  *
  * @author Nicolas Grekas <p@tchwork.com>
+ *
+ * @deprecated since Symfony 8.1, use deepclone_hydrate() from the deepclone extension instead
  */
 final class Hydrator
 {

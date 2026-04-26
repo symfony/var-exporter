@@ -11,10 +11,14 @@
 
 namespace Symfony\Component\VarExporter\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\IgnoreDeprecations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\VarExporter\Hydrator;
 use Symfony\Component\VarExporter\Instantiator;
 
+#[Group('legacy')]
+#[IgnoreDeprecations]
 class HydratorTest extends TestCase
 {
     public function testHydrateInitializedReadonlyPropertySameValueIsIdempotent()
