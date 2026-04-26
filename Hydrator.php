@@ -65,6 +65,17 @@ final class Hydrator
             unset($value);
         }
 
+        if (\is_array($splState = $mangledVars["\0"] ?? null)) {
+            unset($mangledVars["\0"]);
+            if ($instance instanceof \SplObjectStorage) {
+                $instance->__unserialize([$splState, []]);
+            } elseif ($instance instanceof \ArrayObject) {
+                $instance->__unserialize([$splState[1] ?? 0, $splState[0] ?? [], [], $splState[2] ?? \ArrayIterator::class]);
+            } elseif ($instance instanceof \ArrayIterator) {
+                $instance->__unserialize([$splState[1] ?? 0, $splState[0] ?? [], []]);
+            }
+        }
+
         if ($mangledVars) {
             deepclone_hydrate($instance, $mangledVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
         }

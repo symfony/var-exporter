@@ -50,12 +50,30 @@ final class Instantiator
             unset($value);
         }
 
+        if (\is_array($splState = $mangledVars["\0"] ?? null)) {
+            unset($mangledVars["\0"]);
+        }
+
         try {
-            return deepclone_hydrate($class, $mangledVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
+            $instance = deepclone_hydrate($class, $mangledVars, \DEEPCLONE_HYDRATE_PRESERVE_REFS);
         } catch (\DeepClone\ClassNotFoundException $e) {
             throw new ClassNotFoundException($e);
         } catch (\DeepClone\NotInstantiableException $e) {
             throw new NotInstantiableTypeException($e);
         }
+
+        if (!\is_array($splState)) {
+            return $instance;
+        }
+
+        if ($instance instanceof \SplObjectStorage) {
+            $instance->__unserialize([$splState, []]);
+        } elseif ($instance instanceof \ArrayObject) {
+            $instance->__unserialize([$splState[1] ?? 0, $splState[0] ?? [], [], $splState[2] ?? \ArrayIterator::class]);
+        } elseif ($instance instanceof \ArrayIterator) {
+            $instance->__unserialize([$splState[1] ?? 0, $splState[0] ?? [], []]);
+        }
+
+        return $instance;
     }
 }
