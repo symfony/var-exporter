@@ -17,10 +17,13 @@ use Symfony\Component\VarExporter\DeepCloner;
 use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 use Symfony\Component\VarExporter\Exception\LogicException;
 use Symfony\Component\VarExporter\Exception\NotInstantiableTypeException;
+use Symfony\Component\VarExporter\LazyObjectInterface;
+use Symfony\Component\VarExporter\ProxyHelper;
 use Symfony\Component\VarExporter\Tests\Fixtures\FooReadonly;
 use Symfony\Component\VarExporter\Tests\Fixtures\FooUnitEnum;
 use Symfony\Component\VarExporter\Tests\Fixtures\GoodNight;
 use Symfony\Component\VarExporter\Tests\Fixtures\MyWakeup;
+use Symfony\Component\VarExporter\Tests\Fixtures\SimpleObject;
 
 class DeepCloneTest extends TestCase
 {
@@ -965,6 +968,55 @@ class DeepCloneTest extends TestCase
         $this->expectException(\ValueError::class);
         $this->expectExceptionMessage('"stdClass" is not allowed');
         DeepCloner::deepClone(new \stdClass(), ['DateTime']);
+    }
+
+    public function testDeepCloneOfLazyProxyMaterializesAndClones()
+    {
+        $initCounter = 0;
+        $proxy = $this->createLazyProxy(SimpleObject::class, static function () use (&$initCounter) {
+            ++$initCounter;
+
+            return new SimpleObject();
+        });
+
+        $this->assertInstanceOf(LazyObjectInterface::class, $proxy);
+        $this->assertFalse($proxy->isLazyObjectInitialized());
+        $this->assertSame(0, $initCounter);
+
+        $clone = DeepCloner::deepClone($proxy);
+
+        $this->assertSame(1, $initCounter, 'DeepCloner triggers initialization via __serialize().');
+        $this->assertNotSame($proxy, $clone);
+        $this->assertInstanceOf(SimpleObject::class, $clone);
+        $this->assertSame('method', $clone->getMethod());
+
+        $alreadyInitialized = $this->createLazyProxy(SimpleObject::class, static fn () => new SimpleObject());
+        $this->assertSame('method', $alreadyInitialized->getMethod());
+        $this->assertTrue($alreadyInitialized->isLazyObjectInitialized());
+
+        $clone = DeepCloner::deepClone($alreadyInitialized);
+        $this->assertInstanceOf(SimpleObject::class, $clone);
+        $this->assertSame('method', $clone->getMethod());
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     *
+     * @return T
+     */
+    private function createLazyProxy(string $class, \Closure $initializer): object
+    {
+        $r = new \ReflectionClass($class);
+        $proxyCode = ProxyHelper::generateLazyProxy($r);
+        $proxyClass = str_replace('\\', '_', $class).'_DeepCloneLazy_'.md5($proxyCode);
+
+        if (!class_exists($proxyClass, false)) {
+            eval(($r->isReadOnly() ? 'readonly ' : '').'class '.$proxyClass.' '.$proxyCode);
+        }
+
+        return $proxyClass::createLazyProxy($initializer);
     }
 
     private static function assertPureArray(array $data, string $path = '', bool $root = true): void

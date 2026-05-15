@@ -31,6 +31,22 @@ use Symfony\Component\VarExporter\Exception\NotInstantiableTypeException;
  * come from either the native `deepclone` PHP extension (for a 4-5x speedup) or the
  * `symfony/polyfill-deepclone` package when the extension is not loaded.
  *
+ * Security:
+ * A DeepCloner instance is itself safe to serialize and unserialize (its serialized form is
+ * a pure array of scalars and nested arrays, no objects), so it can be round-tripped via
+ * unserialize($data, ['allowed_classes' => [DeepCloner::class]]) without instantiating any
+ * other class at unserialize() time. However, the $allowedClasses discipline that applies
+ * to PHP's native unserialize() extends to clone(), cloneAs(), deepClone() and to the cloner
+ * returned by fromArray(): these are what actually instantiate the inner objects (running
+ * __wakeup() / __unserialize() on them). $allowedClasses = null (the default) lets the cloner
+ * instantiate any class loaded in the process, including classes with side effects in
+ * __wakeup() / __unserialize(), which reproduces the full unserialize-gadget surface.
+ * Callers that obtain a DeepCloner (or its array payload) from an untrusted source MUST pass
+ * an explicit allow-list to the clone methods; pass [] to forbid all classes. Allow-list
+ * violations surface as \ValueError (matching PHP's unserialize() contract), not as
+ * {@see Exception\ExceptionInterface}; callers that want to catch every DeepCloner failure
+ * must catch both.
+ *
  * @template T
  *
  * @author Nicolas Grekas <p@tchwork.com>
@@ -43,6 +59,9 @@ final class DeepCloner
      * @param T                 $value
      * @param list<string>|null $allowedClasses Classes that may be serialized.
      *                                          null (default) allows all classes. An empty array allows none.
+     *
+     * @throws NotInstantiableTypeException When $value (or a nested value) cannot be serialized
+     * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
     public function __construct(mixed $value, ?array $allowedClasses = null)
     {
@@ -56,12 +75,20 @@ final class DeepCloner
     /**
      * Deep-clones a PHP value.
      *
+     * When the input may come from an untrusted source, pass an explicit allow-list:
+     * $allowedClasses = null (default) allows every loaded class to be instantiated,
+     * which runs __wakeup() / __unserialize() on them. Pass [] to forbid all classes.
+     *
      * @template U
      *
      * @param U                 $value
      * @param list<string>|null $allowedClasses classes that may be serialized/deserialized
      *
      * @return U
+     *
+     * @throws ClassNotFoundException       When a class in the graph cannot be loaded
+     * @throws NotInstantiableTypeException When $value (or a nested value) cannot be serialized/instantiated
+     * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
     public static function deepClone(mixed $value, ?array $allowedClasses = null): mixed
     {
@@ -79,10 +106,20 @@ final class DeepCloner
     /**
      * Creates a deep clone of the value.
      *
+     * When this DeepCloner was obtained from an untrusted source (e.g. unserialize() of
+     * attacker-controlled data, or fromArray() on an attacker-controlled payload), the
+     * $allowedClasses argument is the security boundary: $allowedClasses = null (default)
+     * lets any loaded class be instantiated and runs __wakeup() / __unserialize() on it,
+     * reproducing the unserialize-gadget surface. Pass an explicit list (or [] for none).
+     *
      * @param list<string>|null $allowedClasses Classes that may be instantiated.
      *                                          null (default) allows all classes. An empty array allows none.
      *
      * @return T
+     *
+     * @throws ClassNotFoundException       When a class in the graph cannot be loaded
+     * @throws NotInstantiableTypeException When a class in the graph cannot be instantiated
+     * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
     public function clone(?array $allowedClasses = null): mixed
     {
@@ -104,6 +141,12 @@ final class DeepCloner
      *
      * The target class must be compatible with the original (typically in the same hierarchy).
      *
+     * When this DeepCloner was obtained from an untrusted source, the $allowedClasses argument
+     * is the security boundary: $allowedClasses = null (default) lets any loaded class be
+     * instantiated and runs __wakeup() / __unserialize() on it. Pass an explicit list (or []
+     * for none). $class itself is not implicitly allow-listed; include it in $allowedClasses
+     * when restricting.
+     *
      * @template U of object
      *
      * @param class-string<U>   $class
@@ -111,6 +154,11 @@ final class DeepCloner
      *                                          null (default) allows all classes. An empty array allows none.
      *
      * @return U
+     *
+     * @throws LogicException               When the cloned value is not an object
+     * @throws ClassNotFoundException       When $class or another class in the graph cannot be loaded
+     * @throws NotInstantiableTypeException When $class or another class in the graph cannot be instantiated
+     * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
     public function cloneAs(string $class, ?array $allowedClasses = null): object
     {
@@ -165,9 +213,12 @@ final class DeepCloner
     /**
      * Restores a DeepCloner from an array previously created by {@see toArray()}.
      *
-     * @template U
+     * The payload is stored as-is and validated lazily on the first clone() / cloneAs() call.
+     * When $data comes from an untrusted source, the returned cloner must be used with an
+     * explicit $allowedClasses allow-list on clone() / cloneAs(); otherwise any loaded class
+     * referenced in the payload can be instantiated, running its __wakeup() / __unserialize().
      *
-     * @return self<U>
+     * @return self<mixed>
      */
     public static function fromArray(array $data): self
     {

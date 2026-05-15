@@ -65,6 +65,39 @@ class HydratorTest extends TestCase
 
         $this->assertSame(456, $object->getValue());
     }
+
+    public function testHydrateSplObjectStorageMagicNullKey()
+    {
+        $key1 = new \stdClass();
+        $key2 = new \stdClass();
+        $storage = new \SplObjectStorage();
+
+        Hydrator::hydrate($storage, ["\0" => [$key1, 'info1', $key2, 'info2']]);
+
+        $this->assertCount(2, $storage);
+        $this->assertTrue($storage->contains($key1));
+        $this->assertTrue($storage->contains($key2));
+        $this->assertSame('info1', $storage[$key1]);
+        $this->assertSame('info2', $storage[$key2]);
+    }
+
+    public function testHydrateArrayObjectMagicNullKey()
+    {
+        $arrayObject = new \ArrayObject();
+
+        Hydrator::hydrate($arrayObject, ["\0" => [['a' => 1, 'b' => 2]]]);
+
+        $this->assertSame(['a' => 1, 'b' => 2], $arrayObject->getArrayCopy());
+    }
+
+    public function testHydrateArrayIteratorMagicNullKey()
+    {
+        $iterator = new \ArrayIterator();
+
+        Hydrator::hydrate($iterator, ["\0" => [['x' => 10, 'y' => 20]]]);
+
+        $this->assertSame(['x' => 10, 'y' => 20], $iterator->getArrayCopy());
+    }
 }
 
 class HydratorTestClass

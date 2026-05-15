@@ -11,7 +11,9 @@ of objects:
 - `DeepCloner` deep-clones PHP values while preserving copy-on-write benefits
   for strings and arrays, making it faster and more memory efficient than
   `unserialize(serialize())`;
-- `Lazy*Trait` can make a class behave as a lazy-loading ghost or virtual proxy.
+- `ProxyHelper::generateLazyProxy()` generates lazy-loading decorators for
+  abstract or internal classes and for interfaces (use native lazy objects
+  for regular concrete classes).
 
 The component depends on the native [`ext-deepclone`](https://github.com/symfony/php-ext-deepclone)
 extension for maximum performance, or on [its polyfill](https://github.com/symfony/polyfill/tree/main/src/DeepClone)
