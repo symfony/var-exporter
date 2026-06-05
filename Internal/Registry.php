@@ -40,7 +40,7 @@ class Registry
 
         try {
             foreach ($serializables as $k => $v) {
-                $objects[$k] = unserialize($v);
+                $objects[$k] = unserialize($v, ['allowed_classes' => true]);
             }
         } finally {
             ini_set('unserialize_callback_func', $unserializeCallback);
@@ -91,7 +91,7 @@ class Registry
                     $proto = null;
                 } else {
                     try {
-                        $proto = @unserialize($proto.\strlen($class).':"'.$class.'":0:{}');
+                        $proto = @unserialize($proto.\strlen($class).':"'.$class.'":0:{}', ['allowed_classes' => true]);
                     } catch (\Exception $e) {
                         if (__FILE__ !== $e->getFile()) {
                             throw $e;
