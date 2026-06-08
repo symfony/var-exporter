@@ -93,13 +93,21 @@ class Registry
                     try {
                         $proto = @unserialize($proto.\strlen($class).':"'.$class.'":0:{}');
                     } catch (\Exception $e) {
-                        if (__FILE__ !== $e->getFile()) {
+                        if (method_exists($class, '__unserialize')) {
+                            // The class cannot be instantiated empty but defines __serialize()/__unserialize();
+                            // it'll be reconstructed by serializing the whole value.
+                            $proto = null;
+                        } elseif (__FILE__ !== $e->getFile()) {
                             throw $e;
+                        } else {
+                            throw new NotInstantiableTypeException($class, $e);
                         }
-                        throw new NotInstantiableTypeException($class, $e);
                     }
                     if (false === $proto) {
-                        throw new NotInstantiableTypeException($class);
+                        if (!method_exists($class, '__unserialize')) {
+                            throw new NotInstantiableTypeException($class);
+                        }
+                        $proto = null;
                     }
                 }
             }

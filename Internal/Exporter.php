@@ -79,6 +79,15 @@ class Exporter
             $sleep = null;
             $proto = Registry::$prototypes[$class];
 
+            if (null === $proto && !$value instanceof \Serializable && method_exists($class, '__unserialize')) {
+                // The class cannot be instantiated empty; let serialize()/unserialize()
+                // deal with reconstructing the whole value.
+                ++$objectsCount;
+                $objectsPool[$value] = [$id = \count($objectsPool), serialize($value), [], 0];
+                $value = new Reference($id);
+                goto handle_value;
+            }
+
             if ($reflector->hasMethod('__serialize')) {
                 if (!$reflector->getMethod('__serialize')->isPublic()) {
                     throw new \Error(\sprintf('Call to %s method "%s::__serialize()".', $reflector->getMethod('__serialize')->isProtected() ? 'protected' : 'private', $class));
