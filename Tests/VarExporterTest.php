@@ -84,7 +84,6 @@ class VarExporterTest extends TestCase
 
     public static function provideFailingSerialization()
     {
-        yield [hash_init('md5')];
         yield [new \ReflectionClass(\stdClass::class)];
         yield [(new \ReflectionFunction(static function (): int {}))->getReturnType()];
         yield [new \ReflectionGenerator((static function () { yield 123; })())];
@@ -103,6 +102,35 @@ class VarExporterTest extends TestCase
         $a[0] = &$a;
 
         yield [$a];
+    }
+
+    public function testHashContext()
+    {
+        $value = hash_init('md5');
+        hash_update($value, 'foo');
+
+        $copy = eval('return '.VarExporter::export($value).';');
+
+        hash_update($value, 'bar');
+        hash_update($copy, 'bar');
+
+        $this->assertSame(hash_final($value), hash_final($copy));
+    }
+
+    public function testBcMathNumber()
+    {
+        if (!class_exists(\BcMath\Number::class)) {
+            $this->markTestSkipped('The "bcmath" extension with the BcMath\Number class is required.');
+        }
+
+        $value = new \BcMath\Number('9999.99');
+
+        $marshalledValue = VarExporter::export($value);
+        $copy = eval('return '.$marshalledValue.';');
+
+        $this->assertInstanceOf(\BcMath\Number::class, $copy);
+        $this->assertSame((string) $value, (string) $copy);
+        $this->assertTrue($value == $copy);
     }
 
     #[DataProvider('provideExport')]

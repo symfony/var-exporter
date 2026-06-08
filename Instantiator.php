@@ -49,9 +49,9 @@ final class Instantiator
         } elseif (null === Registry::$prototypes[$class]) {
             throw new NotInstantiableTypeException($class);
         } elseif ($reflector->implementsInterface('Serializable') && !method_exists($class, '__unserialize')) {
-            $instance = unserialize('C:'.\strlen($class).':"'.$class.'":0:{}');
+            $instance = unserialize('C:'.\strlen($class).':"'.$class.'":0:{}', ['allowed_classes' => true]);
         } else {
-            $instance = unserialize('O:'.\strlen($class).':"'.$class.'":0:{}');
+            $instance = unserialize('O:'.\strlen($class).':"'.$class.'":0:{}', ['allowed_classes' => true]);
         }
 
         return $properties || $scopedProperties ? Hydrator::hydrate($instance, $properties, $scopedProperties) : $instance;
