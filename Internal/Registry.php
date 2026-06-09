@@ -38,7 +38,7 @@ class Registry
 
         try {
             foreach ($serializables as $k => $v) {
-                $objects[$k] = unserialize($v);
+                $objects[$k] = unserialize($v, ['allowed_classes' => true]);
             }
         } finally {
             ini_set('unserialize_callback_func', $unserializeCallback);
@@ -89,15 +89,23 @@ class Registry
                     $proto = null;
                 } else {
                     try {
-                        $proto = @unserialize($proto.\strlen($class).':"'.$class.'":0:{}');
+                        $proto = @unserialize($proto.\strlen($class).':"'.$class.'":0:{}', ['allowed_classes' => true]);
                     } catch (\Exception $e) {
-                        if (__FILE__ !== $e->getFile()) {
+                        if (method_exists($class, '__unserialize')) {
+                            // The class cannot be instantiated empty but defines __serialize()/__unserialize();
+                            // it'll be reconstructed by serializing the whole value.
+                            $proto = null;
+                        } elseif (__FILE__ !== $e->getFile()) {
                             throw $e;
+                        } else {
+                            throw new NotInstantiableTypeException($class, $e);
                         }
-                        throw new NotInstantiableTypeException($class, $e);
                     }
                     if (false === $proto) {
-                        throw new NotInstantiableTypeException($class);
+                        if (!method_exists($class, '__unserialize')) {
+                            throw new NotInstantiableTypeException($class);
+                        }
+                        $proto = null;
                     }
                 }
             }
