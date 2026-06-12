@@ -48,7 +48,7 @@ final class VarExporter
         }
 
         try {
-            $data = deepclone_to_array($value);
+            $data = deepclone_to_array($value, null, true);
         } catch (\DeepClone\NotInstantiableException $e) {
             throw new NotInstantiableTypeException($e);
         }
@@ -68,6 +68,6 @@ final class VarExporter
             $foundClasses[$classes] = $classes;
         }
 
-        return '\deepclone_from_array('.Exporter::export($data).')';
+        return '\deepclone_from_array('.Exporter::export($data).', null, true)';
     }
 }

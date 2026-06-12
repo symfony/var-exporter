@@ -15,4 +15,4 @@ return \deepclone_from_array([
             'bar' => ['ddd'],
         ],
     ],
-]);
+], null, true);

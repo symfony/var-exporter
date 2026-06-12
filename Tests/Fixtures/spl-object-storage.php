@@ -19,4 +19,4 @@ return \deepclone_from_array([
             ],
         ],
     ],
-]);
+], null, true);

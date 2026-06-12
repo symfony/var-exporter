@@ -11,4 +11,4 @@ return \deepclone_from_array([
             'priv' => [234, 234],
         ],
     ],
-]);
+], null, true);

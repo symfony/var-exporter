@@ -10,4 +10,4 @@ return \deepclone_from_array([
             'value' => ['v'],
         ],
     ],
-]);
+], null, true);

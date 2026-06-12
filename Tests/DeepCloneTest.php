@@ -430,9 +430,16 @@ class DeepCloneTest extends TestCase
     public function testNamedClosure()
     {
         $fn = strlen(...);
-        $clone = DeepCloner::deepClone($fn);
+        $clone = DeepCloner::deepClone($fn, null, true);
 
         $this->assertSame(5, $clone('hello'));
+    }
+
+    public function testNamedClosureIsRefusedByDefault()
+    {
+        $this->expectException(\ValueError::class);
+
+        DeepCloner::deepClone(strlen(...));
     }
 
     public function testRepeatedClones()
@@ -646,12 +653,12 @@ class DeepCloneTest extends TestCase
 
         // Named closure (global function)
         $fn = strlen(...);
-        self::assertPureArray((new DeepCloner($fn))->__serialize());
+        self::assertPureArray((new DeepCloner($fn, null, true))->__serialize());
 
         // Object with closure property
         $obj = new \stdClass();
         $obj->fn = strlen(...);
-        self::assertPureArray((new DeepCloner($obj))->__serialize());
+        self::assertPureArray((new DeepCloner($obj, null, true))->__serialize());
 
         // Hard references
         $value = [(object) []];
@@ -670,9 +677,9 @@ class DeepCloneTest extends TestCase
     public function testSerializeRoundtripWithNamedClosure()
     {
         $fn = strlen(...);
-        $cloner = new DeepCloner($fn);
+        $cloner = new DeepCloner($fn, null, true);
         $restored = unserialize(serialize($cloner));
-        $clone = $restored->clone();
+        $clone = $restored->clone(null, true);
 
         $this->assertSame(5, $clone('hello'));
     }
@@ -683,9 +690,9 @@ class DeepCloneTest extends TestCase
         $obj->fn = strlen(...);
         $obj->name = 'test';
 
-        $cloner = new DeepCloner($obj);
+        $cloner = new DeepCloner($obj, null, true);
         $restored = unserialize(serialize($cloner));
-        $clone = $restored->clone();
+        $clone = $restored->clone(null, true);
 
         $this->assertSame('test', $clone->name);
         $this->assertSame(5, ($clone->fn)('hello'));
@@ -906,12 +913,12 @@ class DeepCloneTest extends TestCase
 
     public function testToArrayFromArrayWithNamedClosure()
     {
-        $cloner = new DeepCloner(strlen(...));
+        $cloner = new DeepCloner(strlen(...), null, true);
         $data = $cloner->toArray();
         self::assertPureArray($data);
 
         $restored = DeepCloner::fromArray($data);
-        $this->assertSame(5, $restored->clone()('hello'));
+        $this->assertSame(5, $restored->clone(null, true)('hello'));
     }
 
     public function testToArrayFromArrayWithCircularRef()

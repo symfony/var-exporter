@@ -56,17 +56,17 @@ final class DeepCloner
     private array $payload;
 
     /**
-     * @param T                 $value
-     * @param list<string>|null $allowedClasses Classes that may be serialized.
-     *                                          null (default) allows all classes. An empty array allows none.
+     * @param T                       $value
+     * @param list<class-string>|null $allowedClasses    Classes that may be instantiated; null (default) allows all; an empty array allows none
+     * @param bool                    $allowNamedClosure Whether to allow cloning of named closures, enable only if you trust the payload
      *
      * @throws NotInstantiableTypeException When $value (or a nested value) cannot be serialized
      * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
-    public function __construct(mixed $value, ?array $allowedClasses = null)
+    public function __construct(mixed $value, ?array $allowedClasses = null, bool $allowNamedClosure = false)
     {
         try {
-            $this->payload = deepclone_to_array($value, $allowedClasses);
+            $this->payload = deepclone_to_array($value, $allowedClasses, $allowNamedClosure);
         } catch (\DeepClone\NotInstantiableException $e) {
             throw new NotInstantiableTypeException($e);
         }
@@ -81,8 +81,9 @@ final class DeepCloner
      *
      * @template U
      *
-     * @param U                 $value
-     * @param list<string>|null $allowedClasses classes that may be serialized/deserialized
+     * @param U                       $value
+     * @param list<class-string>|null $allowedClasses    Classes that may be instantiated; null (default) allows all; an empty array allows none
+     * @param bool                    $allowNamedClosure Whether to allow cloning of named closures, enable only if you trust the payload
      *
      * @return U
      *
@@ -90,9 +91,9 @@ final class DeepCloner
      * @throws NotInstantiableTypeException When $value (or a nested value) cannot be serialized/instantiated
      * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
-    public static function deepClone(mixed $value, ?array $allowedClasses = null): mixed
+    public static function deepClone(mixed $value, ?array $allowedClasses = null, bool $allowNamedClosure = false): mixed
     {
-        return (new self($value, $allowedClasses))->clone($allowedClasses);
+        return (new self($value, $allowedClasses, $allowNamedClosure))->clone($allowedClasses, $allowNamedClosure);
     }
 
     /**
@@ -112,8 +113,8 @@ final class DeepCloner
      * lets any loaded class be instantiated and runs __wakeup() / __unserialize() on it,
      * reproducing the unserialize-gadget surface. Pass an explicit list (or [] for none).
      *
-     * @param list<string>|null $allowedClasses Classes that may be instantiated.
-     *                                          null (default) allows all classes. An empty array allows none.
+     * @param list<class-string>|null $allowedClasses    Classes that may be instantiated; null (default) allows all; an empty array allows none
+     * @param bool                    $allowNamedClosure Whether to allow cloning of named closures, enable only if you trust the payload
      *
      * @return T
      *
@@ -121,14 +122,14 @@ final class DeepCloner
      * @throws NotInstantiableTypeException When a class in the graph cannot be instantiated
      * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
-    public function clone(?array $allowedClasses = null): mixed
+    public function clone(?array $allowedClasses = null, bool $allowNamedClosure = false): mixed
     {
         if (\array_key_exists('value', $this->payload)) {
             return $this->payload['value'];
         }
 
         try {
-            return deepclone_from_array($this->payload, $allowedClasses);
+            return deepclone_from_array($this->payload, $allowedClasses, $allowNamedClosure);
         } catch (\DeepClone\ClassNotFoundException $e) {
             throw new ClassNotFoundException($e);
         } catch (\DeepClone\NotInstantiableException $e) {
@@ -149,9 +150,9 @@ final class DeepCloner
      *
      * @template U of object
      *
-     * @param class-string<U>   $class
-     * @param list<string>|null $allowedClasses Classes that may be instantiated.
-     *                                          null (default) allows all classes. An empty array allows none.
+     * @param class-string<U>         $class
+     * @param list<class-string>|null $allowedClasses    Classes that may be instantiated; null (default) allows all; an empty array allows none
+     * @param bool                    $allowNamedClosure Whether to allow cloning of named closures, enable only if you trust the payload
      *
      * @return U
      *
@@ -160,7 +161,7 @@ final class DeepCloner
      * @throws NotInstantiableTypeException When $class or another class in the graph cannot be instantiated
      * @throws \ValueError                  When a class in the graph is not in $allowedClasses
      */
-    public function cloneAs(string $class, ?array $allowedClasses = null): object
+    public function cloneAs(string $class, ?array $allowedClasses = null, bool $allowNamedClosure = false): object
     {
         if (\array_key_exists('value', $this->payload) || !\is_int($this->payload['prepared'] ?? null) || $this->payload['prepared'] < 0) {
             throw new LogicException('DeepCloner::cloneAs() requires the value to be an object.');
@@ -192,7 +193,7 @@ final class DeepCloner
         $payload['objectMeta'] = $meta;
 
         try {
-            return deepclone_from_array($payload, $allowedClasses);
+            return deepclone_from_array($payload, $allowedClasses, $allowNamedClosure);
         } catch (\DeepClone\ClassNotFoundException $e) {
             throw new ClassNotFoundException($e);
         } catch (\DeepClone\NotInstantiableException $e) {

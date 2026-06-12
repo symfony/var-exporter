@@ -5,4 +5,4 @@ return \deepclone_from_array([
     'objectMeta' => [0, 1],
     'prepared' => [0, 1],
     'mask' => [true, true],
-]);
+], null, true);

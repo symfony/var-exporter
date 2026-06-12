@@ -12,4 +12,4 @@ return \deepclone_from_array([
             ['foo' => 'ccc'],
         ],
     ],
-]);
+], null, true);

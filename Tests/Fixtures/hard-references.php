@@ -7,4 +7,4 @@ return \deepclone_from_array([
     'mask' => [false, false, true],
     'refs' => [1 => 0],
     'refMasks' => [1 => true],
-]);
+], null, true);

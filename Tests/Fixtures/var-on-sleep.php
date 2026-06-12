@@ -13,4 +13,4 @@ return \deepclone_from_array([
             'bar' => ['morning'],
         ],
     ],
-]);
+], null, true);

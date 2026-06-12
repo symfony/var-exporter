@@ -10,4 +10,4 @@ return \deepclone_from_array([
             'bar' => [234],
         ],
     ],
-]);
+], null, true);

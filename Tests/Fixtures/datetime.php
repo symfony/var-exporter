@@ -44,4 +44,4 @@ return \deepclone_from_array([
             ['start' => true, 'interval' => true],
         ],
     ],
-]);
+], null, true);

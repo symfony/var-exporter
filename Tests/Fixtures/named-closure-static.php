@@ -5,4 +5,4 @@ return \deepclone_from_array([
     'objectMeta' => 0,
     'prepared' => ['Symfony\\Component\\VarExporter\\Tests\\TestClass', 'testStaticMethod'],
     'mask' => 0,
-]);
+], null, true);

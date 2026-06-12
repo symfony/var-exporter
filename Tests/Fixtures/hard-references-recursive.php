@@ -11,4 +11,4 @@ return \deepclone_from_array([
     'refMasks' => [
         1 => [false],
     ],
-]);
+], null, true);
